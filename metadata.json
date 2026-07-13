@@ -1,0 +1,6 @@
+{
+  "name": "SIM DIKDASMEN Kabupaten Klaten",
+  "description": "Sistem Informasi Manajemen Pendidikan Dasar dan Menengah Kabupaten Klaten terintegrasi Google Sheets dan Google Drive.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
