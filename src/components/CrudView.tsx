@@ -115,6 +115,57 @@ export default function CrudView({
     setMutasiFilter('aktif');
   }, [tableName, searchQuery, currentPage]);
 
+  // Computed available entities based on Role & Cabang/Sekolah boundaries
+  const availableCabang = React.useMemo(() => {
+    if (userRole === 'Cabang' && userCabangId) {
+      return data.cabang.filter((c) => c.id === userCabangId);
+    }
+    return data.cabang;
+  }, [data.cabang, userRole, userCabangId]);
+
+  const availableSekolah = React.useMemo(() => {
+    if (userRole === 'Cabang' && userCabangId) {
+      return data.sekolah.filter((s) => s.cabangId === userCabangId);
+    }
+    if (userRole === 'Sekolah' && userSekolahId) {
+      return data.sekolah.filter((s) => s.id === userSekolahId);
+    }
+    return data.sekolah;
+  }, [data.sekolah, userRole, userCabangId, userSekolahId]);
+
+  const availableGuru = React.useMemo(() => {
+    if (userRole === 'Cabang' && userCabangId) {
+      const schoolIds = new Set(availableSekolah.map((s) => s.id));
+      return data.guru.filter((g) => schoolIds.has(g.schoolId));
+    }
+    if (userRole === 'Sekolah' && userSekolahId) {
+      return data.guru.filter((g) => g.schoolId === userSekolahId);
+    }
+    return data.guru;
+  }, [data.guru, availableSekolah, userRole, userCabangId, userSekolahId]);
+
+  const availableTendik = React.useMemo(() => {
+    if (userRole === 'Cabang' && userCabangId) {
+      const schoolIds = new Set(availableSekolah.map((s) => s.id));
+      return (data.tendik || []).filter((t) => schoolIds.has(t.schoolId));
+    }
+    if (userRole === 'Sekolah' && userSekolahId) {
+      return (data.tendik || []).filter((t) => t.schoolId === userSekolahId);
+    }
+    return data.tendik || [];
+  }, [data.tendik, availableSekolah, userRole, userCabangId, userSekolahId]);
+
+  const availableKepalaSekolah = React.useMemo(() => {
+    if (userRole === 'Cabang' && userCabangId) {
+      const schoolIds = new Set(availableSekolah.map((s) => s.id));
+      return data.kepalaSekolah.filter((k) => schoolIds.has(k.schoolId));
+    }
+    if (userRole === 'Sekolah' && userSekolahId) {
+      return data.kepalaSekolah.filter((k) => k.schoolId === userSekolahId);
+    }
+    return data.kepalaSekolah;
+  }, [data.kepalaSekolah, availableSekolah, userRole, userCabangId, userSekolahId]);
+
   // 1. Define Fields Configuration for each Table
   const fields = useMemo((): FormField[] => {
     switch (tableName) {
@@ -141,7 +192,7 @@ export default function CrudView({
             type: 'select',
             options: [
               { value: '', label: '-- Pilih Cabang --' },
-              ...data.cabang.map((c) => ({ value: c.id, label: c.name })),
+              ...availableCabang.map((c) => ({ value: c.id, label: c.name })),
             ],
           },
           {
@@ -150,7 +201,7 @@ export default function CrudView({
             type: 'select',
             options: [
               { value: '', label: '-- Pilih Sekolah --' },
-              ...data.sekolah.map((s) => ({ value: s.id, label: s.name })),
+              ...availableSekolah.map((s) => ({ value: s.id, label: s.name })),
             ],
           },
         ];
@@ -170,7 +221,7 @@ export default function CrudView({
             label: 'Pimpinan Cabang',
             type: 'select',
             required: true,
-            options: data.cabang.map((c) => ({ value: c.id, label: c.name })),
+            options: availableCabang.map((c) => ({ value: c.id, label: c.name })),
           },
           { name: 'address', label: 'Alamat Jalan Sekolah/Madrasah', type: 'textarea', placeholder: 'Jl. Pemuda No...', required: true },
           { name: 'rtRw', label: 'RT / RW', type: 'text', placeholder: 'Misal: 002 / 005' },
@@ -296,7 +347,7 @@ export default function CrudView({
             label: 'Sekolah Tempat Bertugas',
             type: 'select',
             required: true,
-            options: data.sekolah.map((s) => ({ value: s.id, label: s.name })),
+            options: availableSekolah.map((s) => ({ value: s.id, label: s.name })),
           },
           {
             name: 'status',
@@ -385,7 +436,7 @@ export default function CrudView({
             label: 'Sekolah Tempat Bertugas',
             type: 'select',
             required: true,
-            options: data.sekolah.map((s) => ({ value: s.id, label: s.name })),
+            options: availableSekolah.map((s) => ({ value: s.id, label: s.name })),
           },
           {
             name: 'status',
@@ -461,7 +512,7 @@ export default function CrudView({
             label: 'Sekolah Tempat Bertugas',
             type: 'select',
             required: true,
-            options: data.sekolah.map((s) => ({ value: s.id, label: s.name })),
+            options: availableSekolah.map((s) => ({ value: s.id, label: s.name })),
           },
           { name: 'startDate', label: 'TMT SK Kepala Sekolah/Madrasah', type: 'date', required: true },
           { name: 'endDate', label: 'Tanggal Berakhir Jabatan Kepala sesuai SK', type: 'date', required: true },
@@ -512,7 +563,7 @@ export default function CrudView({
             label: 'Sekolah',
             type: 'select',
             required: true,
-            options: data.sekolah.map((s) => ({ value: s.id, label: s.name })),
+            options: availableSekolah.map((s) => ({ value: s.id, label: s.name })),
           },
           { name: 'class', label: 'Kelas', type: 'text', placeholder: 'Misal: VII-A, X-MIPA-1...', required: true },
           { name: 'address', label: 'Alamat Domisili (Jalan / Dusun)', type: 'textarea', placeholder: 'Tuliskan alamat domisili...' },
@@ -551,7 +602,7 @@ export default function CrudView({
             label: 'Penerima Guru',
             type: 'select',
             required: true,
-            options: data.guru.map((g) => {
+            options: availableGuru.map((g) => {
               const sch = data.sekolah.find((s) => s.id === g.schoolId);
               return { value: g.id, label: `${g.name}${sch ? ` - ${sch.name}` : ''}` };
             }),
@@ -595,7 +646,7 @@ export default function CrudView({
             label: 'Penerima Tenaga Kependidikan',
             type: 'select',
             required: true,
-            options: (data.tendik || []).map((t) => {
+            options: availableTendik.map((t) => {
               const sch = data.sekolah.find((s) => s.id === t.schoolId);
               return { value: t.id, label: `${t.name} (${t.position || 'Tendik'})${sch ? ` - ${sch.name}` : ''}` };
             }),
@@ -639,7 +690,7 @@ export default function CrudView({
             label: 'Penerima Kepala Sekolah',
             type: 'select',
             required: true,
-            options: data.kepalaSekolah.map((ks) => {
+            options: availableKepalaSekolah.map((ks) => {
               const sch = data.sekolah.find((s) => s.id === ks.schoolId);
               return { value: ks.id, label: `${ks.name}${sch ? ` - ${sch.name}` : ''}` };
             }),
@@ -959,14 +1010,24 @@ export default function CrudView({
   // 9. Save Form (Submit)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (userRole === 'Cabang') {
-      setFormError('Akses Cabang terbatas untuk melihat dan mengekspor data saja.');
-      return;
-    }
     setFormLoading(true);
     setFormError(null);
 
     let saveData = { ...formData };
+
+    if (userRole === 'Cabang' && userCabangId) {
+      if (tableName === 'Sekolah' || saveData.hasOwnProperty('cabangId')) {
+        saveData.cabangId = userCabangId;
+      }
+      if (saveData.schoolId) {
+        const targetSch = data.sekolah.find((s) => s.id === saveData.schoolId);
+        if (!targetSch || targetSch.cabangId !== userCabangId) {
+          setFormError('Anda hanya dapat menginput data untuk sekolah di wilayah Cabang Anda.');
+          setFormLoading(false);
+          return;
+        }
+      }
+    }
 
     if (['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName)) {
       if (userRole !== 'Admin' && userRole !== 'Super Admin' && !editingId) {
@@ -1236,7 +1297,11 @@ export default function CrudView({
               logs.push(`⚠️ Baris ${i + 1}: Lewati (NPSN "${record.npsn}" ganda dengan Sekolah "${dup.name}")`);
               continue;
             }
-            if (!record.cabangId) record.cabangId = data.cabang[0]?.id || 'cab-1';
+            if (userRole === 'Cabang' && userCabangId) {
+              record.cabangId = userCabangId;
+            } else if (!record.cabangId) {
+              record.cabangId = data.cabang[0]?.id || 'cab-1';
+            }
             if (!record.status) record.status = 'Negeri';
             if (!record.level) record.level = 'SMA';
           } else if (tableName === 'Guru') {
@@ -1254,7 +1319,15 @@ export default function CrudView({
               logs.push(`⚠️ Baris ${i + 1}: Lewati (Identitas NIPM/NIP "${identifier}" ganda dengan Guru "${dup.name}")`);
               continue;
             }
-            if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
+            if (!record.schoolId) {
+              record.schoolId = availableSekolah[0]?.id || 'sch-1';
+            } else if (userRole === 'Cabang' && userCabangId) {
+              const isAllowed = availableSekolah.some((s) => s.id === record.schoolId);
+              if (!isAllowed) {
+                logs.push(`⚠️ Baris ${i + 1}: Lewati (Sekolah "${record.schoolId}" di luar wilayah Cabang Anda)`);
+                continue;
+              }
+            }
             if (!record.gender) record.gender = 'Laki-laki';
             if (!record.status) record.status = 'PNS';
           } else if (tableName === 'TenagaKependidikan') {
@@ -1271,7 +1344,15 @@ export default function CrudView({
               logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NIK "${identifier}" ganda dengan Tendik "${dup.name}")`);
               continue;
             }
-            if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
+            if (!record.schoolId) {
+              record.schoolId = availableSekolah[0]?.id || 'sch-1';
+            } else if (userRole === 'Cabang' && userCabangId) {
+              const isAllowed = availableSekolah.some((s) => s.id === record.schoolId);
+              if (!isAllowed) {
+                logs.push(`⚠️ Baris ${i + 1}: Lewati (Sekolah "${record.schoolId}" di luar wilayah Cabang Anda)`);
+                continue;
+              }
+            }
             if (!record.gender) record.gender = 'Laki-laki';
             if (!record.position) record.position = 'Staff Administrasi (TU)';
             if (!record.status) record.status = 'PNS';
@@ -1285,7 +1366,15 @@ export default function CrudView({
               logs.push(`⚠️ Baris ${i + 1}: Lewati (NISN "${record.nisn}" ganda dengan Siswa "${dup.name}")`);
               continue;
             }
-            if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
+            if (!record.schoolId) {
+              record.schoolId = availableSekolah[0]?.id || 'sch-1';
+            } else if (userRole === 'Cabang' && userCabangId) {
+              const isAllowed = availableSekolah.some((s) => s.id === record.schoolId);
+              if (!isAllowed) {
+                logs.push(`⚠️ Baris ${i + 1}: Lewati (Sekolah "${record.schoolId}" di luar wilayah Cabang Anda)`);
+                continue;
+              }
+            }
             if (!record.class) record.class = 'X';
             if (!record.gender) record.gender = 'Laki-laki';
             if (!record.status) record.status = 'Aktif';
@@ -1615,8 +1704,8 @@ export default function CrudView({
             <FileSpreadsheet size={13} /> Ekspor Excel
           </button>
 
-          {/* Import from Excel/CSV (Disabled for Cabang) */}
-          {userRole !== 'Cabang' && ['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && (
+          {/* Import from Excel/CSV */}
+          {['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && (
             <button
               onClick={() => {
                 setImportError(null);
@@ -1635,8 +1724,8 @@ export default function CrudView({
             </button>
           )}
 
-          {/* Read-only check for Activity Logs, Notifications & Cabang Role */}
-          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && userRole !== 'Cabang' && (
+          {/* Add Data Button */}
+          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && (
             <button
               onClick={handleOpenAdd}
               className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-emerald-400/20 active:scale-[0.98]"
@@ -1648,9 +1737,9 @@ export default function CrudView({
       </div>
 
       {userRole === 'Cabang' && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
-          <ShieldCheck size={16} className="text-amber-600 shrink-0" />
-          <span>Mode Pimpinan Cabang: Hak akses hanya untuk melihat dan mengekspor data (Fitur Edit & Impor dinonaktifkan).</span>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
+          <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+          <span>Mode Pimpinan Cabang: Anda dapat menginput dan mengelola data sekolah serta personel khusus di wilayah cabang Anda.</span>
         </div>
       )}
 
@@ -1758,7 +1847,7 @@ export default function CrudView({
               isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-[#F8FAFC] border-slate-100 text-slate-600'
             }`}>
               {/* Checkbox column header (Disabled for Logs & Cabang Role) */}
-              {tableName !== 'LogAktivitas' && userRole !== 'Cabang' ? (
+              {tableName !== 'LogAktivitas' ? (
                 <th className="py-2.5 px-3 w-10 text-center">
                   <input
                     type="checkbox"
@@ -1776,7 +1865,7 @@ export default function CrudView({
                   {tableHeaders[key as keyof typeof tableHeaders]}
                 </th>
               ))}
-              {tableName !== 'LogAktivitas' && userRole !== 'Cabang' && (
+              {tableName !== 'LogAktivitas' && (
                 <th className="py-2.5 px-3 text-center w-24 text-[10px] font-bold uppercase tracking-wider">Aksi</th>
               )}
             </tr>
@@ -1784,7 +1873,7 @@ export default function CrudView({
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
             {paginatedList.length === 0 ? (
               <tr>
-                <td colSpan={Object.keys(tableHeaders).length + (userRole === 'Cabang' ? 1 : 2)} className="p-12 text-center text-slate-400">
+                <td colSpan={Object.keys(tableHeaders).length + 2} className="p-12 text-center text-slate-400">
                   <AlertCircle className="h-6 w-6 mx-auto text-slate-300 mb-2" />
                   Belum ada data tersedia.
                 </td>
@@ -1807,7 +1896,7 @@ export default function CrudView({
                     }`}
                   >
                     {/* Checkbox column cell */}
-                    {tableName !== 'LogAktivitas' && userRole !== 'Cabang' ? (
+                    {tableName !== 'LogAktivitas' ? (
                       <td className="py-2 px-3 text-center">
                         <input
                           type="checkbox"
@@ -1826,7 +1915,7 @@ export default function CrudView({
                       </td>
                     ))}
 
-                    {tableName !== 'LogAktivitas' && userRole !== 'Cabang' && (
+                    {tableName !== 'LogAktivitas' && (
                       <td className="py-2 px-3 text-center flex items-center justify-center gap-1.5 print:hidden">
                         {(userRole === 'Admin' || userRole === 'Super Admin') &&
                           ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) &&
