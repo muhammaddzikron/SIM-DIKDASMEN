@@ -793,7 +793,7 @@ export default function App() {
         onTabChange={setCurrentTab}
         userRole={activeRole}
         userName={userProfile?.name || user?.displayName || 'User'}
-        userEmail={user?.email || ''}
+        userEmail={userProfile?.email || user?.email || ''}
         onLogout={handleLogout}
         unreadCount={unreadCount}
       />
@@ -820,66 +820,168 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             {/* Interactive Role Simulator */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Simulasi Peran:</span>
-              <select
-                value={activeRole}
-                onChange={(e) => {
-                  const simulatedRole = e.target.value as Role;
-                  const simulatedName = simulatedRole === 'Super Admin' 
-                    ? 'Super Admin Klaten' 
-                    : simulatedRole === 'Admin' 
-                    ? 'Admin Operator' 
-                    : simulatedRole === 'Cabang' 
-                    ? 'Pimpinan Cabang V' 
-                    : 'SMAN 1 Klaten';
-                  const simulatedEmail = simulatedRole === 'Super Admin' 
-                    ? 'admin@klaten.go.id' 
-                    : simulatedRole === 'Admin' 
-                    ? 'admin2@klaten.go.id' 
-                    : simulatedRole === 'Cabang' 
-                    ? 'cabang@klaten.go.id' 
-                    : 'sman1klaten@klaten.go.id';
-                  
-                  localStorage.setItem('sim_override_role', simulatedRole);
-                  localStorage.setItem('sim_override_username', simulatedName);
-                  localStorage.setItem('sim_override_email', simulatedEmail);
-                  
-                  // Set simulated scoping IDs
-                  if (simulatedRole === 'Cabang') {
-                    localStorage.setItem('sim_override_cabang_id', 'cab-1');
-                    localStorage.removeItem('sim_override_sekolah_id');
-                  } else if (simulatedRole === 'Sekolah') {
-                    localStorage.setItem('sim_override_cabang_id', 'cab-1');
-                    localStorage.setItem('sim_override_sekolah_id', 'sch-1');
-                  } else {
-                    localStorage.removeItem('sim_override_cabang_id');
-                    localStorage.removeItem('sim_override_sekolah_id');
-                  }
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-xs flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Simulasi Peran:</span>
+                <select
+                  value={activeRole}
+                  onChange={(e) => {
+                    const simulatedRole = e.target.value as Role;
+                    let simulatedName = '';
+                    let simulatedEmail = '';
+                    let simulatedCabangId: string | undefined = undefined;
+                    let simulatedSekolahId: string | undefined = undefined;
 
-                  const updatedProfile: User = {
-                    id: 'usr-override',
-                    email: simulatedEmail,
-                    name: simulatedName,
-                    role: simulatedRole,
-                    cabangId: simulatedRole === 'Cabang' || simulatedRole === 'Sekolah' ? 'cab-1' : undefined,
-                    sekolahId: simulatedRole === 'Sekolah' ? 'sch-1' : undefined,
-                    createdAt: new Date().toISOString(),
-                  };
-                  setUserProfile(updatedProfile);
-                  
-                  // Re-run sync to adapt permissions
-                  if (accessToken) {
-                    syncData(accessToken, spreadsheetId);
-                  }
-                }}
-                className="bg-transparent border-none text-[10px] font-bold text-slate-700 focus:outline-none cursor-pointer outline-none"
-              >
-                <option value="Super Admin">Super Admin</option>
-                <option value="Admin">Admin</option>
-                <option value="Cabang">Pimpinan Cabang</option>
-                <option value="Sekolah">Sekolah (SMAN 1)</option>
-              </select>
+                    if (simulatedRole === 'Super Admin') {
+                      simulatedName = 'Super Admin Klaten';
+                      simulatedEmail = 'admin@klaten.go.id';
+                    } else if (simulatedRole === 'Admin') {
+                      simulatedName = 'Admin Operator';
+                      simulatedEmail = 'admin2@klaten.go.id';
+                    } else if (simulatedRole === 'Cabang') {
+                      const curCab = data.cabang.find((c) => c.id === userProfile?.cabangId) || data.cabang[0];
+                      simulatedCabangId = curCab?.id || 'cab-1';
+                      simulatedName = curCab?.name || 'Pimpinan Cabang Wilayah V';
+                      simulatedEmail = `cabang.${simulatedCabangId}@klaten.go.id`;
+                    } else if (simulatedRole === 'Sekolah') {
+                      const curSch = data.sekolah.find((s) => s.id === userProfile?.sekolahId) || data.sekolah[0];
+                      simulatedSekolahId = curSch?.id || 'sch-1';
+                      simulatedCabangId = curSch?.cabangId || 'cab-1';
+                      simulatedName = curSch?.name || 'SMAN 1 Klaten';
+                      simulatedEmail = curSch?.email || 'sman1klaten@klaten.go.id';
+                    }
+                    
+                    localStorage.setItem('sim_override_role', simulatedRole);
+                    localStorage.setItem('sim_override_username', simulatedName);
+                    localStorage.setItem('sim_override_email', simulatedEmail);
+                    
+                    if (simulatedCabangId) {
+                      localStorage.setItem('sim_override_cabang_id', simulatedCabangId);
+                    } else {
+                      localStorage.removeItem('sim_override_cabang_id');
+                    }
+
+                    if (simulatedSekolahId) {
+                      localStorage.setItem('sim_override_sekolah_id', simulatedSekolahId);
+                    } else {
+                      localStorage.removeItem('sim_override_sekolah_id');
+                    }
+
+                    const updatedProfile: User = {
+                      id: 'usr-override',
+                      email: simulatedEmail,
+                      name: simulatedName,
+                      role: simulatedRole,
+                      cabangId: simulatedCabangId,
+                      sekolahId: simulatedSekolahId,
+                      createdAt: new Date().toISOString(),
+                    };
+                    setUserProfile(updatedProfile);
+                    
+                    if (accessToken) {
+                      syncData(accessToken, spreadsheetId);
+                    }
+                  }}
+                  className="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:outline-none cursor-pointer outline-none"
+                >
+                  <option value="Super Admin">Super Admin</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Cabang">Pimpinan Cabang</option>
+                  <option value="Sekolah">Sekolah (Terdaftar)</option>
+                </select>
+              </div>
+
+              {/* Sub-selector for Sekolah when Role === 'Sekolah' */}
+              {activeRole === 'Sekolah' && (
+                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">Nama Sekolah:</span>
+                  <select
+                    value={userProfile?.sekolahId || (data.sekolah[0]?.id ?? 'sch-1')}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const selectedSch = data.sekolah.find((s) => s.id === selectedId);
+                      if (selectedSch) {
+                        const simName = selectedSch.name;
+                        const simEmail = selectedSch.email || `${selectedSch.id}@dikdasmen.org`;
+                        const simCab = selectedSch.cabangId || 'cab-1';
+
+                        localStorage.setItem('sim_override_role', 'Sekolah');
+                        localStorage.setItem('sim_override_username', simName);
+                        localStorage.setItem('sim_override_email', simEmail);
+                        localStorage.setItem('sim_override_sekolah_id', selectedSch.id);
+                        localStorage.setItem('sim_override_cabang_id', simCab);
+
+                        const updatedProfile: User = {
+                          id: 'usr-override',
+                          email: simEmail,
+                          name: simName,
+                          role: 'Sekolah',
+                          cabangId: simCab,
+                          sekolahId: selectedSch.id,
+                          createdAt: new Date().toISOString(),
+                        };
+                        setUserProfile(updatedProfile);
+
+                        if (accessToken) {
+                          syncData(accessToken, spreadsheetId);
+                        }
+                      }
+                    }}
+                    className="bg-transparent border-none text-[10px] font-extrabold text-emerald-900 focus:outline-none cursor-pointer outline-none max-w-[220px] truncate"
+                  >
+                    {data.sekolah.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Sub-selector for Cabang when Role === 'Cabang' */}
+              {activeRole === 'Cabang' && data.cabang.length > 0 && (
+                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300">
+                  <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wide">Pilih Cabang:</span>
+                  <select
+                    value={userProfile?.cabangId || (data.cabang[0]?.id ?? 'cab-1')}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const selectedCab = data.cabang.find((c) => c.id === selectedId);
+                      if (selectedCab) {
+                        const simName = selectedCab.name;
+                        const simEmail = `pimpinan.${selectedCab.id}@dikdasmen.org`;
+
+                        localStorage.setItem('sim_override_role', 'Cabang');
+                        localStorage.setItem('sim_override_username', simName);
+                        localStorage.setItem('sim_override_email', simEmail);
+                        localStorage.setItem('sim_override_cabang_id', selectedCab.id);
+                        localStorage.removeItem('sim_override_sekolah_id');
+
+                        const updatedProfile: User = {
+                          id: 'usr-override',
+                          email: simEmail,
+                          name: simName,
+                          role: 'Cabang',
+                          cabangId: selectedCab.id,
+                          createdAt: new Date().toISOString(),
+                        };
+                        setUserProfile(updatedProfile);
+
+                        if (accessToken) {
+                          syncData(accessToken, spreadsheetId);
+                        }
+                      }
+                    }}
+                    className="bg-transparent border-none text-[10px] font-extrabold text-teal-900 focus:outline-none cursor-pointer outline-none max-w-[220px] truncate"
+                  >
+                    {data.cabang.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="text-right">

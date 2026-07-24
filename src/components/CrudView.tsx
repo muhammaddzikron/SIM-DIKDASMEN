@@ -233,10 +233,10 @@ export default function CrudView({
             label: 'Kategori Kemampuan Sekolah / Madrasah',
             type: 'select',
             options: [
-              { value: 'UGD', label: '1. UGD (> S/M Dibawah 100 Siswa) - WARNA MERAH (Menuju Rintisan)' },
-              { value: 'RAWAT INAP', label: '2. RAWAT INAP (> S/M 100-400 Siswa) - WARNA HIJAU (Mandiri)' },
-              { value: 'RAWAT JALAN', label: '3. RAWAT JALAN (> S/M 400-600 Siswa) - WARNA BIRU (Unggul)' },
-              { value: 'SEHAT', label: '4. SEHAT (> S/M Diatas 600 Siswa) - WARNA UNGU (Premium)' },
+              { value: 'UGD', label: '1. UGD (> S/M Dibawah 100 Siswa) - Menuju Rintisan' },
+              { value: 'RAWAT INAP', label: '2. RAWAT INAP (> S/M 100-400 Siswa) - Mandiri' },
+              { value: 'RAWAT JALAN', label: '3. RAWAT JALAN (> S/M 400-600 Siswa) - Unggul' },
+              { value: 'SEHAT', label: '4. SEHAT (> S/M Diatas 600 Siswa) - Premium' },
             ],
           },
           { name: 'skPendirianNumber', label: 'Nomor SK Pendirian Sekolah/Madrasah', type: 'text', placeholder: 'Nomor SK Pendirian...' },
@@ -1226,26 +1226,26 @@ export default function CrudView({
       const v = String(val || '').toUpperCase();
       if (v.includes('UGD') || v === 'UGD') {
         return (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-600 text-white shadow-xs">
-            1. UGD (MERAH)
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-rose-600 text-white shadow-xs">
+            1. UGD
           </span>
         );
       } else if (v.includes('RAWAT INAP') || v === 'RAWAT INAP') {
         return (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-600 text-white shadow-xs">
-            2. RAWAT INAP (HIJAU)
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-emerald-600 text-white shadow-xs">
+            2. RAWAT INAP
           </span>
         );
       } else if (v.includes('RAWAT JALAN') || v === 'RAWAT JALAN') {
         return (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-600 text-white shadow-xs">
-            3. RAWAT JALAN (BIRU)
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-blue-600 text-white shadow-xs">
+            3. RAWAT JALAN
           </span>
         );
       } else if (v.includes('SEHAT') || v === 'SEHAT') {
         return (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-600 text-white shadow-xs">
-            4. SEHAT (UNGU)
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-purple-600 text-white shadow-xs">
+            4. SEHAT
           </span>
         );
       }

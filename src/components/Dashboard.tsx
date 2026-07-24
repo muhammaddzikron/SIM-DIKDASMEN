@@ -115,7 +115,6 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
         code: 'UGD',
         title: '1. UGD',
         range: 'S/M Dibawah 100 Siswa',
-        colorName: 'WARNA MERAH',
         desc: 'Sekolah / Madrasah Menuju Rintisan',
         badgeClass: 'bg-rose-600 text-white font-extrabold shadow-xs',
         bannerBg: 'bg-rose-50 border-rose-200 text-rose-900',
@@ -127,7 +126,6 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
         code: 'RAWAT INAP',
         title: '2. RAWAT INAP',
         range: 'S/M 100 - 400 Siswa',
-        colorName: 'WARNA HIJAU',
         desc: 'Sekolah / Madrasah Mandiri',
         badgeClass: 'bg-emerald-600 text-white font-extrabold shadow-xs',
         bannerBg: 'bg-emerald-50 border-emerald-200 text-emerald-900',
@@ -139,7 +137,6 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
         code: 'RAWAT JALAN',
         title: '3. RAWAT JALAN',
         range: 'S/M 400 - 600 Siswa',
-        colorName: 'WARNA BIRU',
         desc: 'Sekolah / Madrasah Unggul',
         badgeClass: 'bg-blue-600 text-white font-extrabold shadow-xs',
         bannerBg: 'bg-blue-50 border-blue-200 text-blue-900',
@@ -151,7 +148,6 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
         code: 'SEHAT',
         title: '4. SEHAT',
         range: 'S/M Diatas 600 Siswa',
-        colorName: 'WARNA UNGU',
         desc: 'Sekolah / Madrasah Premium',
         badgeClass: 'bg-purple-600 text-white font-extrabold shadow-xs',
         bannerBg: 'bg-purple-50 border-purple-200 text-purple-900',
@@ -164,7 +160,6 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
       code: 'UGD',
       title: '1. UGD',
       range: 'S/M Dibawah 100 Siswa',
-      colorName: 'WARNA MERAH',
       desc: 'Sekolah / Madrasah Menuju Rintisan',
       badgeClass: 'bg-rose-600 text-white font-extrabold shadow-xs',
       bannerBg: 'bg-rose-50 border-rose-200 text-rose-900',
@@ -462,7 +457,7 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
                       Kategori Kemampuan Sekolah / Madrasah Terbaru
                     </span>
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${selectedSchoolCategoryDetails.badgeClass}`}>
-                      {selectedSchoolCategoryDetails.colorName}
+                      {selectedSchoolCategoryDetails.code}
                     </span>
                   </div>
                   <h4 className="text-sm font-black text-slate-900 mt-0.5">
@@ -738,14 +733,13 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* 1. UGD - MERAH */}
+              {/* 1. UGD */}
               <div className="p-3.5 bg-rose-50/80 border border-rose-200 rounded-xl relative overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 bg-rose-600 text-white rounded text-[10px] font-black tracking-wider uppercase">
                       1. UGD
                     </span>
-                    <span className="text-rose-800 font-black text-[10px] uppercase">WARNA MERAH</span>
                   </div>
                   <h4 className="text-sm font-black text-rose-950 mt-2">Menuju Rintisan</h4>
                   <p className="text-[11px] text-rose-700 font-medium mt-0.5">S/M Dibawah 100 Siswa</p>
@@ -756,14 +750,13 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
                 </div>
               </div>
 
-              {/* 2. RAWAT INAP - HIJAU */}
+              {/* 2. RAWAT INAP */}
               <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl relative overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-black tracking-wider uppercase">
                       2. RAWAT INAP
                     </span>
-                    <span className="text-emerald-800 font-black text-[10px] uppercase">WARNA HIJAU</span>
                   </div>
                   <h4 className="text-sm font-black text-emerald-950 mt-2">Sekolah Mandiri</h4>
                   <p className="text-[11px] text-emerald-700 font-medium mt-0.5">S/M 100 - 400 Siswa</p>
@@ -774,14 +767,13 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
                 </div>
               </div>
 
-              {/* 3. RAWAT JALAN - BIRU */}
+              {/* 3. RAWAT JALAN */}
               <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl relative overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-black tracking-wider uppercase">
                       3. RAWAT JALAN
                     </span>
-                    <span className="text-blue-800 font-black text-[10px] uppercase">WARNA BIRU</span>
                   </div>
                   <h4 className="text-sm font-black text-blue-950 mt-2">Sekolah Unggul</h4>
                   <p className="text-[11px] text-blue-700 font-medium mt-0.5">S/M 400 - 600 Siswa</p>
@@ -792,14 +784,13 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
                 </div>
               </div>
 
-              {/* 4. SEHAT - UNGU */}
+              {/* 4. SEHAT */}
               <div className="p-3.5 bg-purple-50/80 border border-purple-200 rounded-xl relative overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 bg-purple-600 text-white rounded text-[10px] font-black tracking-wider uppercase">
                       4. SEHAT
                     </span>
-                    <span className="text-purple-800 font-black text-[10px] uppercase">WARNA UNGU</span>
                   </div>
                   <h4 className="text-sm font-black text-purple-950 mt-2">Sekolah Premium</h4>
                   <p className="text-[11px] text-purple-700 font-medium mt-0.5">S/M Diatas 600 Siswa</p>
