@@ -541,6 +541,23 @@ export default function App() {
       createdAt: record.createdAt || new Date().toISOString(),
     };
 
+    // Auto-create Cabang user account if adding a new Cabang
+    let newCabangUser: User | null = null;
+    if (mappedTable === 'Cabang') {
+      const codeClean = (newRecord.code || 'cab').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const userEmail = record.defaultEmail || `cabang.${codeClean}@pdmklaten.com`;
+      const userPassword = record.defaultPassword || 'cabang123';
+      newCabangUser = {
+        id: 'usr-cab-' + Math.random().toString(36).substr(2, 9),
+        email: userEmail,
+        name: newRecord.name,
+        role: 'Cabang' as Role,
+        password: userPassword,
+        cabangId: newRecord.id,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
     if (!accessToken) {
       // Offline/simulation fallback
       const arrayKey = currentTab === 'users' ? 'users' : currentTab === 'kepalaSekolah' ? 'kepalaSekolah' : currentTab === 'skGuru' ? 'skGuru' : currentTab === 'skKepalaSekolah' ? 'skKepalaSekolah' : currentTab === 'logAktivitas' ? 'logAktivitas' : currentTab;
@@ -548,6 +565,7 @@ export default function App() {
         const next = {
           ...prev,
           [arrayKey]: [...((prev as any)[arrayKey] || []), newRecord],
+          users: newCabangUser ? [...prev.users, newCabangUser] : prev.users,
         };
         localStorage.setItem('sim_offline_db', JSON.stringify(next));
         return next;
@@ -557,6 +575,13 @@ export default function App() {
     }
 
     await insertRecord(accessToken, spreadsheetId, mappedTable, newRecord);
+    if (newCabangUser) {
+      try {
+        await insertRecord(accessToken, spreadsheetId, 'Users', newCabangUser);
+      } catch (err) {
+        console.error('Gagal membuat akun user Cabang:', err);
+      }
+    }
     await logActivity(`CREATE_${mappedTable.toUpperCase()}`, `Menambahkan record ${newRecord.id}`);
     await syncData(accessToken, spreadsheetId);
   };

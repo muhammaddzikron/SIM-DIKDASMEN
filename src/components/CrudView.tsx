@@ -66,6 +66,7 @@ export default function CrudView({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSKForPrint, setSelectedSKForPrint] = useState<any | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [formLoading, setFormLoading] = useState(false);
@@ -208,8 +209,10 @@ export default function CrudView({
 
       case 'Cabang':
         return [
-          { name: 'name', label: 'Nama Pimpinan Cabang', type: 'text', placeholder: 'Misal: Pimpinan Cabang Wilayah V', required: true },
-          { name: 'code', label: 'Kode Cabang', type: 'text', placeholder: 'Misal: CAB-V', required: true },
+          { name: 'name', label: 'Nama Pimpinan Cabang', type: 'text', placeholder: 'Misal: Pimpinan Cabang Delanggu', required: true },
+          { name: 'code', label: 'Kode Cabang', type: 'text', placeholder: 'Misal: CAB-DLG', required: true },
+          { name: 'defaultEmail', label: 'Username / Email Default Login Cabang', type: 'text', placeholder: 'cabang.delanggu@pdmklaten.com' },
+          { name: 'defaultPassword', label: 'Password Default Cabang', type: 'password', placeholder: 'Default: cabang123' },
         ];
 
       case 'Sekolah':
@@ -1015,6 +1018,12 @@ export default function CrudView({
 
     let saveData = { ...formData };
 
+    if (userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName) && !editingId) {
+      setFormError('Role Admin tidak dapat menambah data Sekolah, Guru, Tendik, atau Siswa. Penginputan data dilakukan oleh Pihak Sekolah / Cabang.');
+      setFormLoading(false);
+      return;
+    }
+
     if (userRole === 'Cabang' && userCabangId) {
       if (tableName === 'Sekolah' || saveData.hasOwnProperty('cabangId')) {
         saveData.cabangId = userCabangId;
@@ -1705,7 +1714,7 @@ export default function CrudView({
           </button>
 
           {/* Import from Excel/CSV */}
-          {['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && (
+          {['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && userRole !== 'Admin' && (
             <button
               onClick={() => {
                 setImportError(null);
@@ -1725,7 +1734,8 @@ export default function CrudView({
           )}
 
           {/* Add Data Button */}
-          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && (
+          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' &&
+            !(userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName)) && (
             <button
               onClick={handleOpenAdd}
               className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-emerald-400/20 active:scale-[0.98]"
@@ -1740,6 +1750,13 @@ export default function CrudView({
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
           <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
           <span>Mode Pimpinan Cabang: Anda dapat menginput dan mengelola data sekolah serta personel khusus di wilayah cabang Anda.</span>
+        </div>
+      )}
+
+      {userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName) && (
+        <div className="bg-sky-500/10 border border-sky-500/20 text-sky-800 dark:text-sky-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
+          <ShieldCheck size={16} className="text-sky-600 shrink-0" />
+          <span>Mode Admin Operator: Penginputan data {getFriendlyTableName(tableName)} diserahkan kepada Pihak Sekolah / Cabang. Anda bertugas memverifikasi pengajuan SK dan verifikasi dokumen.</span>
         </div>
       )}
 
@@ -1917,15 +1934,24 @@ export default function CrudView({
 
                     {tableName !== 'LogAktivitas' && (
                       <td className="py-2 px-3 text-center flex items-center justify-center gap-1.5 print:hidden">
+                        {['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) && (
+                          <button
+                            onClick={() => setSelectedSKForPrint(item)}
+                            className="p-1 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs shrink-0"
+                            title="Lihat & Cetak Surat Keputusan Resmi (SK)"
+                          >
+                            <FileText size={11} /> Cetak SK
+                          </button>
+                        )}
                         {(userRole === 'Admin' || userRole === 'Super Admin') &&
                           ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) &&
                           item.status !== 'Terbit' && (
                             <button
                               onClick={() => handleQuickApproveSK(item)}
-                              className="p-1 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                              className="p-1 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs shrink-0"
                               title="Setujui & Terbitkan SK Ini"
                             >
-                              <CheckCircle size={11} /> Approve
+                              <CheckCircle size={11} /> Verifikasi
                             </button>
                         )}
                         <button
@@ -2397,6 +2423,205 @@ export default function CrudView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SK Official Certificate / Print Modal */}
+      {selectedSKForPrint && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-white text-slate-900 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Control Bar (hidden when printing) */}
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0 print:hidden">
+              <div className="flex items-center gap-2">
+                <FileText className="text-emerald-400" size={18} />
+                <div>
+                  <h3 className="font-bold text-sm">Pratinjau Surat Keputusan (SK) Official</h3>
+                  <p className="text-[10px] text-slate-400">Majelis Dikdasmen PDM Kabupaten Klaten</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedSKForPrint.fileUrl && (
+                  <a
+                    href={selectedSKForPrint.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
+                  >
+                    <ExternalLink size={13} /> Lampiran Drive
+                  </a>
+                )}
+                <button
+                  onClick={() => window.print()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <Printer size={14} /> Cetak / Unduh PDF
+                </button>
+                <button
+                  onClick={() => setSelectedSKForPrint(null)}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable SK Document Canvas */}
+            <div className="p-8 sm:p-12 overflow-y-auto font-serif text-slate-900 bg-white print:p-0 print:m-0 print:shadow-none">
+              {/* Kop Surat Official */}
+              <div className="border-b-4 border-double border-slate-900 pb-4 mb-6 text-center">
+                <div className="flex items-center justify-center gap-4 mb-2">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10"
+                    alt="Logo Dikdasmen"
+                    className="w-16 h-16 object-contain"
+                  />
+                </div>
+                <h4 className="font-sans font-bold text-xs tracking-wider uppercase text-slate-700">
+                  MAJELIS PENDIDIKAN DASAR DAN MENENGAH DAN PENDIDIKAN NONFORMAL
+                </h4>
+                <h2 className="font-sans font-black text-lg tracking-tight uppercase text-slate-900 mt-0.5">
+                  PIMPINAN DAERAH MUHAMMADIYAH KABUPATEN KLATEN
+                </h2>
+                <p className="font-sans text-[10px] text-slate-600 mt-1">
+                  Alamat: Jl. Klaten - Solo KM. 2, Klaten, Jawa Tengah. Telp/Fax: (0272) 321520 | Email: dikdasmen@pdmklaten.or.id
+                </p>
+              </div>
+
+              {/* SK Header */}
+              <div className="text-center my-6 space-y-1">
+                <h3 className="font-sans font-black text-base underline uppercase tracking-wide">
+                  SURAT KEPUTUSAN
+                </h3>
+                <p className="font-sans font-semibold text-xs text-slate-800">
+                  Nomor: {selectedSKForPrint.skNumber || '(Belum Terbit / Dalam Proses)'}
+                </p>
+                <p className="font-sans text-xs italic text-slate-700 pt-2 font-medium">
+                  TENTANG: {selectedSKForPrint.title || 'PENGANGKATAN DAN PENETAPAN STATUS KEPEDAGOGIAN'}
+                </p>
+              </div>
+
+              {/* Bismillah */}
+              <p className="text-center font-bold text-sm my-4 italic">
+                Bismillahirrahmanirrahim
+              </p>
+
+              {/* Body Content */}
+              <div className="font-sans text-xs space-y-3 leading-relaxed text-slate-800 text-justify">
+                <p>
+                  Pimpinan Daerah Muhammadiyah Kabupaten Klaten, Majelis Pendidikan Dasar dan Menengah, setelah membaca, menimbang, dan memperhatikan permohonan pengajuan serta dokumen kelengkapan administrasi yang telah diverifikasi oleh Tim Admin Operator:
+                </p>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 my-4 space-y-2">
+                  <div className="grid grid-cols-3 gap-2 font-semibold">
+                    <span className="text-slate-500">Nama Penerima</span>
+                    <span className="col-span-2 text-slate-900 font-bold">
+                      {(() => {
+                        if (tableName === 'SKGuru') {
+                          const g = data.guru.find((item) => item.id === selectedSKForPrint.guruId);
+                          return g ? g.name : 'Guru';
+                        }
+                        if (tableName === 'SKTenagaKependidikan') {
+                          const t = (data.tendik || []).find((item) => item.id === selectedSKForPrint.tendikId);
+                          return t ? t.name : 'Tenaga Kependidikan';
+                        }
+                        if (tableName === 'SKKepalaSekolah') {
+                          const k = data.kepalaSekolah.find((item) => item.id === selectedSKForPrint.kepalaSekolahId);
+                          return k ? k.name : 'Kepala Sekolah';
+                        }
+                        return '-';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-slate-500">NIPM / NIK / NUPTK</span>
+                    <span className="col-span-2 text-slate-900 font-mono font-medium">
+                      {(() => {
+                        if (tableName === 'SKGuru') {
+                          const g = data.guru.find((item) => item.id === selectedSKForPrint.guruId);
+                          return g ? g.nip || '-' : '-';
+                        }
+                        if (tableName === 'SKTenagaKependidikan') {
+                          const t = (data.tendik || []).find((item) => item.id === selectedSKForPrint.tendikId);
+                          return t ? t.nip || '-' : '-';
+                        }
+                        if (tableName === 'SKKepalaSekolah') {
+                          const k = data.kepalaSekolah.find((item) => item.id === selectedSKForPrint.kepalaSekolahId);
+                          return k ? k.nip || '-' : '-';
+                        }
+                        return '-';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-slate-500">Unit Kerja / Sekolah</span>
+                    <span className="col-span-2 text-slate-900 font-medium">
+                      {(() => {
+                        let schId = '';
+                        if (tableName === 'SKGuru') {
+                          schId = data.guru.find((item) => item.id === selectedSKForPrint.guruId)?.schoolId || '';
+                        } else if (tableName === 'SKTenagaKependidikan') {
+                          schId = (data.tendik || []).find((item) => item.id === selectedSKForPrint.tendikId)?.schoolId || '';
+                        } else if (tableName === 'SKKepalaSekolah') {
+                          schId = data.kepalaSekolah.find((item) => item.id === selectedSKForPrint.kepalaSekolahId)?.schoolId || '';
+                        }
+                        const sch = data.sekolah.find((s) => s.id === schId);
+                        return sch ? sch.name : 'Sekolah Muhammadiyah Klaten';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-slate-500">Jenis Pengajuan</span>
+                    <span className="col-span-2 text-emerald-700 font-bold">SK {selectedSKForPrint.submissionType || 'Baru'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-slate-500">Masa TMT Berlaku</span>
+                    <span className="col-span-2 text-slate-900 font-medium">{selectedSKForPrint.skDate || '-'} s/d {selectedSKForPrint.skEndDate || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-slate-500">Status Approval Admin</span>
+                    <span className="col-span-2 font-bold uppercase text-emerald-600">{selectedSKForPrint.status}</span>
+                  </div>
+                </div>
+
+                <p className="font-bold text-slate-900 mt-2">MEMUTUSKAN:</p>
+                <ol className="list-decimal list-inside space-y-1.5 pl-2 text-slate-700">
+                  <li>Menetapkan dan menerbitkan Surat Keputusan Resmi kepada nama terlampir di atas.</li>
+                  <li>Keputusan ini berlaku sejak tanggal ditetapkan hingga masa TMT berakhir.</li>
+                  <li>Apabila terdapat kekeliruan di kemudian hari, akan diadakan perbaikan sebagaimana mestinya.</li>
+                </ol>
+              </div>
+
+              {/* Signature Block */}
+              <div className="mt-10 font-sans grid grid-cols-2 text-xs gap-6 pt-4 border-t border-slate-100">
+                <div>
+                  <p className="text-slate-500 text-[10px]">Verifikasi Sistem:</p>
+                  <p className="font-mono text-[10px] text-slate-400 mt-1">
+                    HASH: SIM-DIKDASMEN-{selectedSKForPrint.id || 'OFFICIAL'}
+                  </p>
+                  <div className="mt-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg inline-block">
+                    <span className="text-[10px] font-bold text-emerald-800 flex items-center gap-1">
+                      <ShieldCheck size={12} />
+                      Tertelusur & Tersimpan di Database Google Sheets
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-center space-y-1">
+                  <p>Ditetapkan di: <strong>Klaten</strong></p>
+                  <p>Pada Tanggal: <strong>{selectedSKForPrint.skDate || new Date().toLocaleDateString('id-ID')}</strong></p>
+                  <p className="font-bold text-slate-900 pt-2">Majelis Dikdasmen PDM Kabupaten Klaten</p>
+                  <p className="text-[10px] text-slate-500">Ketua,</p>
+                  <div className="h-16 flex items-center justify-center my-1">
+                    <span className="font-mono text-slate-300 text-[10px] border border-dashed border-slate-300 px-3 py-1.5 rounded-lg">
+                      [ STEMPEL & TTD DIGITAL MAJELIS ]
+                    </span>
+                  </div>
+                  <p className="font-bold text-slate-900 underline">H. M. Yamin, S.Pd., M.Pd.</p>
+                  <p className="text-[10px] text-slate-500">NBM. 882.341</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
