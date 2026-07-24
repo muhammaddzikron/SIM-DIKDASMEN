@@ -15,6 +15,10 @@ export interface Cabang {
   id: string;
   name: string;
   code: string;
+  username?: string;
+  password?: string;
+  defaultEmail?: string;
+  defaultPassword?: string;
 }
 
 export interface Sekolah {
@@ -22,6 +26,8 @@ export interface Sekolah {
   name: string; // Nama Sekolah/Madrasah sesuai Referensi Data Kemendikdasmen
   npsn: string;
   cabangId: string;
+  username?: string;
+  password?: string;
   address: string;
   rtRw?: string;
   postalCode?: string;

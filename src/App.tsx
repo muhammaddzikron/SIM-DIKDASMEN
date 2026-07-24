@@ -142,7 +142,7 @@ export default function App() {
       if (freshData.sekolah.length === 0 && freshData.cabang.length === 0) {
         console.log('Seeding starter database values...');
         const starterCabang = [
-          { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V' },
+          { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V', username: 'cabang5', password: 'password', defaultEmail: 'klaut@pdmklaten.com' },
         ];
         const starterSekolah = [
           {
@@ -150,6 +150,8 @@ export default function App() {
             name: 'SMAN 1 Klaten',
             npsn: '20309501',
             cabangId: 'cab-1',
+            username: 'sman1klaten',
+            password: 'password',
             address: 'Jl. Merbabu No.13, Klaten Jawa Tengah',
             status: 'Negeri',
             level: 'SMA',
@@ -309,7 +311,7 @@ export default function App() {
         setData(JSON.parse(cached));
       } else {
         const starterCabang = [
-          { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V' },
+          { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V', username: 'cabang5', password: 'password', defaultEmail: 'klaut@pdmklaten.com' },
         ];
         const starterSekolah = [
           {
@@ -317,6 +319,8 @@ export default function App() {
             name: 'SMAN 1 Klaten',
             npsn: '20309501',
             cabangId: 'cab-1',
+            username: 'sman1klaten',
+            password: 'password',
             address: 'Jl. Merbabu No.13, Klaten Jawa Tengah',
             status: 'Negeri',
             level: 'SMA',

@@ -213,14 +213,17 @@ export default function CrudView({
         return [
           { name: 'name', label: 'Nama Pimpinan Cabang', type: 'text', placeholder: 'Misal: Pimpinan Cabang Delanggu', required: true },
           { name: 'code', label: 'Kode Cabang', type: 'text', placeholder: 'Misal: CAB-DLG', required: true },
-          { name: 'defaultEmail', label: 'Username / Email Default Login Cabang', type: 'text', placeholder: 'cabang.delanggu@pdmklaten.com' },
-          { name: 'defaultPassword', label: 'Password Default Cabang', type: 'password', placeholder: 'Default: cabang123' },
+          { name: 'username', label: 'Username Akses Login Cabang', type: 'text', placeholder: 'Username login cabang (misal: cabang.delanggu)...', required: true },
+          { name: 'password', label: 'Password Akses Login Cabang', type: 'password', placeholder: 'Password login cabang...', required: true },
+          { name: 'defaultEmail', label: 'Email Resmi Cabang (Opsional)', type: 'text', placeholder: 'cabang.delanggu@pdmklaten.com' },
         ];
 
       case 'Sekolah':
         return [
           { name: 'name', label: 'Nama Sekolah/Madrasah (sesuai Referensi Data Kemendikdasmen)', type: 'text', placeholder: 'Misal: SD Muhammadiyah 1 Klaten', required: true },
           { name: 'npsn', label: 'NPSN', type: 'text', placeholder: 'Nomor NPSN...', required: true },
+          { name: 'username', label: 'Username Akses Login Sekolah', type: 'text', placeholder: 'Username login sekolah (misal: sdmuh1klaten / NPSN)...', required: true },
+          { name: 'password', label: 'Password Akses Login Sekolah', type: 'password', placeholder: 'Password login sekolah...', required: true },
           {
             name: 'cabangId',
             label: 'Pimpinan Cabang',
