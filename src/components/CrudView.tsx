@@ -957,17 +957,25 @@ export default function CrudView({
     let templateContent = '';
     let filename = '';
     if (tableName === 'Sekolah') {
-      templateContent = 'npsn,name,level,status,address\n20309501,SMAN 1 Klaten,SMA,Negeri,Jl. Merbabu No.13 Klaten\n20309502,SMKN 1 Klaten,SMK,Negeri,Jl. Pemuda No.120 Klaten\n';
-      filename = 'template_sekolah.csv';
+      templateContent = 'npsn,name,level,status,address,subdistrict,accreditation,categoryCapability,phone,email,operatorName,operatorPhone\n' +
+        '20309501,SMAN 1 Klaten,SMA,Negeri,"Jl. Merbabu No.13 Klaten",Klaten Utara,A,RAWAT INAP,(0272) 321520,sman1klaten@sch.id,Agus Susanto,08123456789\n' +
+        '20309502,SMA Muhammadiyah 1 Klaten,SMA,Swasta,"Jl. Pemuda No.120 Klaten",Klaten Tengah,Unggul,SEHAT,(0272) 321521,smamuh1klaten@sch.id,Budi Hendro,082198765432\n';
+      filename = 'template_impor_sekolah.csv';
     } else if (tableName === 'Guru') {
-      templateContent = 'nipm,name,schoolId,gender,subject,status\n198205122009031005,Eko Sulistyo S.Pd,sch-1,Laki-laki,Matematika,PNS\n199002142018022001,Rina Rahmawati S.Pd,sch-2,Perempuan,Bahasa Inggris,PPPK\n';
-      filename = 'template_guru.csv';
+      templateContent = 'nipm,name,gender,pobDob,sekolah,status,guruType,subject,hasPpg,nuptk,nrg,nip,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
+        '198205122009031005,"Eko Sulistyo, S.Pd",Laki-laki,"Klaten, 15 Mei 1985",SMAN 1 Klaten,PNS,Guru Mata Pelajaran,Matematika,Sudah,1234567890123456,987654321,198205122009031005,1234567,001/SK/2020,2020-01-02,S1,Pendidikan Matematika,"Jl. Pemuda No. 12",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,08123456789,"Pemuda Muhammadiyah Cabang Klaten Utara"\n' +
+        '199002142018022001,"Rina Rahmawati, S.Pd",Perempuan,"Klaten, 20 Juni 1990",SMA Muhammadiyah 1 Klaten,GTP,Guru Kelas,Guru Kelas III,Belum,2345678901234567,,2345678,002/SK/2021,2021-07-15,S1,PGSD,"Jl. Merbabu No. 88",003/001,57412,Buntalan,Klaten Tengah,Kabupaten Klaten,08234567890,"Aisyiyah Ranting Buntalan"\n';
+      filename = 'template_impor_guru.csv';
     } else if (tableName === 'TenagaKependidikan') {
-      templateContent = 'nipm,name,schoolId,gender,position,status\n198504102010011008,Bambang Prasetyo S.Kom,sch-1,Laki-laki,Kepala Tata Usaha,PNS\n199208152020012015,Dewi Lestari A.Md,sch-2,Perempuan,Pustakawan,PPPK\n';
-      filename = 'template_tenaga_kependidikan.csv';
+      templateContent = 'nipm,name,gender,pobDob,sekolah,status,position,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
+        '198504102010011008,"Bambang Prasetyo, S.Kom",Laki-laki,"Boyolali, 10 April 1985",SMAN 1 Klaten,PNS,"Staff Administrasi (TU)",1234568,005/SK/TU/2019,2019-03-01,S1,Teknik Informatika,"Jl. Veteran No. 4",002/004,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,08139876543,"KOKAM Klaten"\n' +
+        '199208152020012015,"Dewi Lestari, A.Md",Perempuan,"Klaten, 15 Agustus 1992",SMA Muhammadiyah 1 Klaten,KTTP,Petugas Perpus,2345679,012/SK/TU/2022,2022-01-10,D3,Ilmu Perpustakaan,"Dusun Tegalsari",001/003,57414,Bareng,Klaten Utara,Kabupaten Klaten,08567890123,"Nasyiatul Aisyiyah"\n';
+      filename = 'template_impor_tenaga_kependidikan.csv';
     } else if (tableName === 'Siswa') {
-      templateContent = 'nisn,name,schoolId,class,gender\n0081234567,Andi Wijaya,sch-1,XI-MIPA-1,Laki-laki\n0098765432,Siti Aminah,sch-2,XII-TKJ-2,Perempuan\n';
-      filename = 'template_siswa.csv';
+      templateContent = 'nisn,name,gender,pobDob,sekolah,class,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status\n' +
+        '0081234567,Andi Wijaya,Laki-laki,"Klaten, 05 April 2012",SMAN 1 Klaten,XI-MIPA-1,"Jl. Merbabu No.10",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Aktif\n' +
+        '0098765432,Siti Aminah,Perempuan,"Klaten, 12 Agustus 2011",SMA Muhammadiyah 1 Klaten,XII-IPS-2,"Jl. Pemuda No.45",002/003,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,Aktif\n';
+      filename = 'template_impor_siswa.csv';
     }
     const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -1028,30 +1036,63 @@ export default function CrudView({
           const record: Record<string, any> = {};
 
           headers.forEach((header, index) => {
-            const val = values[index] || '';
-            if (header === 'npsn' || header === 'nip' || header === 'nipm' || header === 'nisn') {
+            const val = values[index] ? values[index].trim() : '';
+            if (!val) return;
+
+            const h = header.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            if (['npsn'].includes(h)) record['npsn'] = val;
+            else if (['nisn'].includes(h)) record['nisn'] = val;
+            else if (['nipm'].includes(h)) {
+              record['nipm'] = val;
+              if (!record['nip']) record['nip'] = val;
+            } else if (['nip'].includes(h)) {
               record['nip'] = val;
-              if (header === 'npsn') record['npsn'] = val;
-              if (header === 'nisn') record['nisn'] = val;
-            } else if (header === 'nama' || header === 'name') {
-              record['name'] = val;
-            } else if (header === 'jenjang' || header === 'level') {
-              record['level'] = val;
-            } else if (header === 'status') {
-              record['status'] = val;
-            } else if (header === 'alamat' || header === 'address') {
-              record['address'] = val;
-            } else if (header === 'sekolah' || header === 'schoolid') {
-              record['schoolId'] = val;
-            } else if (header === 'gender' || header === 'jenis kelamin') {
-              record['gender'] = val;
-            } else if (header === 'mapel' || header === 'subject') {
-              record['subject'] = val;
-            } else if (header === 'jabatan' || header === 'position' || header === 'tugas') {
-              record['position'] = val;
-            } else if (header === 'kelas' || header === 'class') {
-              record['class'] = val;
-            } else {
+              if (!record['nipm']) record['nipm'] = val;
+            } else if (['nuptk'].includes(h)) record['nuptk'] = val;
+            else if (['nrg'].includes(h)) record['nrg'] = val;
+            else if (['nbm'].includes(h)) record['nbm'] = val;
+            else if (['nama', 'name', 'namaguru', 'namasiswa', 'namakaryawan', 'namatendik'].includes(h)) record['name'] = val;
+            else if (['pobdob', 'tempattanggallahir', 'pob_dob', 'ttl'].includes(h)) record['pobDob'] = val;
+            else if (['gender', 'jeniskelamin', 'jk'].includes(h)) {
+              if (val.toLowerCase().startsWith('l')) record['gender'] = 'Laki-laki';
+              else if (val.toLowerCase().startsWith('p')) record['gender'] = 'Perempuan';
+              else record['gender'] = val;
+            } else if (['sekolah', 'schoolid', 'namasekolah', 'sekolahbertugas'].includes(h)) {
+              const matched = data.sekolah.find(s => 
+                s.id === val || 
+                s.npsn === val || 
+                s.name.toLowerCase() === val.toLowerCase() ||
+                s.name.toLowerCase().includes(val.toLowerCase()) ||
+                val.toLowerCase().includes(s.name.toLowerCase())
+              );
+              record['schoolId'] = matched ? matched.id : val;
+            } else if (['kelas', 'class'].includes(h)) record['class'] = val;
+            else if (['status', 'statusguru', 'statuskaryawan', 'statussiswa'].includes(h)) record['status'] = val;
+            else if (['gurutype', 'jenisguru'].includes(h)) record['guruType'] = val;
+            else if (['subject', 'mapel', 'matapelajaran'].includes(h)) record['subject'] = val;
+            else if (['position', 'jabatan', 'jeniskaryawan', 'tugas'].includes(h)) record['position'] = val;
+            else if (['hasppg', 'ppg', 'sudahppg'].includes(h)) record['hasPpg'] = val;
+            else if (['sknumber', 'nomorsk', 'nosk', 'skpengangkatan'].includes(h)) record['skNumber'] = val;
+            else if (['tmbawal', 'tmtawal', 'tmtpengangkatan', 'tmt'].includes(h)) record['tmtAwal'] = val;
+            else if (['education', 'pendidikan', 'pendidikanterakhir'].includes(h)) record['education'] = val;
+            else if (['educationprodi', 'prodi', 'jurusan'].includes(h)) record['educationProdi'] = val;
+            else if (['address', 'alamat', 'domisili'].includes(h)) record['address'] = val;
+            else if (['rtrw', 'rt_rw', 'rt/rw'].includes(h)) record['rtRw'] = val;
+            else if (['postalcode', 'kodepos', 'pos'].includes(h)) record['postalCode'] = val;
+            else if (['kelurahan', 'desa'].includes(h)) record['kelurahan'] = val;
+            else if (['kecamatan'].includes(h)) record['kecamatan'] = val;
+            else if (['kabupatenkota', 'kabupaten', 'kota'].includes(h)) record['kabupatenKota'] = val;
+            else if (['phone', 'nohp', 'telepon', 'hp'].includes(h)) record['phone'] = val;
+            else if (['persyarikatanactivity', 'keaktifanpersyarikatan', 'persyarikatan', 'ortom'].includes(h)) record['persyarikatanActivity'] = val;
+            else if (['jenjang', 'level'].includes(h)) record['level'] = val;
+            else if (['accreditation', 'akreditasi'].includes(h)) record['accreditation'] = val;
+            else if (['categorycapability', 'kategori', 'kategoriperguruan'].includes(h)) record['categoryCapability'] = val;
+            else if (['subdistrict', 'kecamatansekolah'].includes(h)) record['subdistrict'] = val;
+            else if (['email', 'emailsekolah'].includes(h)) record['email'] = val;
+            else if (['operatorname', 'namaoperator', 'operator'].includes(h)) record['operatorName'] = val;
+            else if (['operatorphone', 'hpoperator', 'nohpoperator'].includes(h)) record['operatorPhone'] = val;
+            else {
               record[header] = val;
             }
           });
@@ -1074,13 +1115,18 @@ export default function CrudView({
             if (!record.status) record.status = 'Negeri';
             if (!record.level) record.level = 'SMA';
           } else if (tableName === 'Guru') {
-            if (!record.nip || !record.name) {
-              logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NUPTK & Nama Guru wajib ada)`);
+            const identifier = record.nipm || record.nip || record.nuptk;
+            if (!identifier || !record.name) {
+              logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NUPTK / NIP & Nama Guru wajib ada)`);
               continue;
             }
-            const dup = data.guru.find(g => g.nip === record.nip);
+            const dup = data.guru.find(g => 
+              (g.nipm && g.nipm === record.nipm) || 
+              (g.nip && g.nip === record.nip) ||
+              (g.nuptk && record.nuptk && g.nuptk === record.nuptk)
+            );
             if (dup) {
-              logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NUPTK "${record.nip}" ganda dengan Guru "${dup.name}")`);
+              logs.push(`⚠️ Baris ${i + 1}: Lewati (Identitas NIPM/NIP "${identifier}" ganda dengan Guru "${dup.name}")`);
               continue;
             }
             if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
@@ -1089,17 +1135,20 @@ export default function CrudView({
           } else if (tableName === 'TenagaKependidikan') {
             const identifier = record.nipm || record.nip;
             if (!identifier || !record.name) {
-              logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NIK & Nama wajib ada)`);
+              logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NIK / NIP & Nama Wajib ada)`);
               continue;
             }
-            const dup = (data.tendik || []).find(t => (t.nipm && t.nipm === identifier) || (t.nip && t.nip === identifier));
+            const dup = (data.tendik || []).find(t => 
+              (t.nipm && t.nipm === identifier) || 
+              (t.nip && t.nip === identifier)
+            );
             if (dup) {
               logs.push(`⚠️ Baris ${i + 1}: Lewati (NIPM / NIK "${identifier}" ganda dengan Tendik "${dup.name}")`);
               continue;
             }
             if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
             if (!record.gender) record.gender = 'Laki-laki';
-            if (!record.position) record.position = 'Staff TU';
+            if (!record.position) record.position = 'Staff Administrasi (TU)';
             if (!record.status) record.status = 'PNS';
           } else if (tableName === 'Siswa') {
             if (!record.nisn || !record.name) {
@@ -1112,8 +1161,9 @@ export default function CrudView({
               continue;
             }
             if (!record.schoolId) record.schoolId = data.sekolah[0]?.id || 'sch-1';
-            if (!record.class) record.class = 'XI';
+            if (!record.class) record.class = 'X';
             if (!record.gender) record.gender = 'Laki-laki';
+            if (!record.status) record.status = 'Aktif';
           }
 
           recordsToImport.push(record);
@@ -1373,7 +1423,7 @@ export default function CrudView({
           {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && (
             <button
               onClick={handleOpenAdd}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-emerald-400/20 active:scale-[0.98]"
             >
               <Plus size={14} /> Tambah {getFriendlyTableName(tableName)}
             </button>
@@ -1698,7 +1748,7 @@ export default function CrudView({
                 <button
                   type="submit"
                   disabled={importing || !importFile}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50"
+                  className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer transition-all shadow-md border border-emerald-400/20 active:scale-[0.98] disabled:opacity-50"
                 >
                   {importing ? (
                     <>
@@ -1878,7 +1928,7 @@ export default function CrudView({
                 <button
                   type="submit"
                   disabled={formLoading || uploadProgress}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer transition-all shadow-md border border-emerald-400/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {formLoading ? 'Menyimpan...' : 'Simpan'}
                 </button>

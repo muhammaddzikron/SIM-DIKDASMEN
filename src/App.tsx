@@ -1102,7 +1102,7 @@ export default function App() {
               <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
                 <button
                   type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                  className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all shadow-md border border-emerald-400/20 active:scale-[0.98]"
                 >
                   Simpan & Hubungkan
                 </button>

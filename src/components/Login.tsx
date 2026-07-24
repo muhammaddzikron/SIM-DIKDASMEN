@@ -284,7 +284,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-colors cursor-pointer text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white font-bold py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer text-xs flex items-center justify-center gap-1.5 disabled:opacity-50 border border-emerald-400/20 active:scale-[0.99]"
             >
               {loading ? (
                 <>

@@ -306,7 +306,7 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
             onClick={() => setSelectedSchoolId('')}
             className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
               selectedSchoolId === ''
-                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 text-white border-emerald-500/30 shadow-md'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
@@ -885,7 +885,7 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
                       <div className="text-right shrink-0">
                         <button
                           onClick={() => onNavigateToTab(sk.type === 'Guru' ? 'skGuru' : 'skKepalaSekolah')}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-[9px] tracking-wide transition-colors cursor-pointer"
+                          className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white font-bold py-1 px-2.5 rounded-md text-[9px] tracking-wide transition-all shadow-xs cursor-pointer border border-emerald-400/20 active:scale-[0.98]"
                         >
                           Terbitkan
                         </button>
