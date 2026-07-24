@@ -1018,6 +1018,12 @@ export default function CrudView({
 
     let saveData = { ...formData };
 
+    if (tableName === 'Sekolah' && userRole === 'Sekolah' && !editingId) {
+      setFormError('Pihak Sekolah tidak dapat menambah unit sekolah baru. Penambahan unit sekolah hanya dapat dilakukan oleh Pimpinan Cabang.');
+      setFormLoading(false);
+      return;
+    }
+
     if (userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName) && !editingId) {
       setFormError('Role Admin tidak dapat menambah data Sekolah, Guru, Tendik, atau Siswa. Penginputan data dilakukan oleh Pihak Sekolah / Cabang.');
       setFormLoading(false);
@@ -1735,7 +1741,8 @@ export default function CrudView({
 
           {/* Add Data Button */}
           {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' &&
-            !(userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName)) && (
+            !(userRole === 'Admin' && ['Sekolah', 'Guru', 'TenagaKependidikan', 'KepalaSekolah', 'Siswa'].includes(tableName)) &&
+            !(tableName === 'Sekolah' && userRole === 'Sekolah') && (
             <button
               onClick={handleOpenAdd}
               className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-emerald-400/20 active:scale-[0.98]"
@@ -1750,6 +1757,13 @@ export default function CrudView({
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
           <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
           <span>Mode Pimpinan Cabang: Anda dapat menginput dan mengelola data sekolah serta personel khusus di wilayah cabang Anda.</span>
+        </div>
+      )}
+
+      {userRole === 'Sekolah' && tableName === 'Sekolah' && (
+        <div className="bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
+          <Building size={16} className="text-blue-600 shrink-0" />
+          <span>Mode Sekolah: Anda dapat mengedit & memperbarui data profil sekolah Anda. Penambahan unit sekolah baru hanya dikelola oleh Pimpinan Cabang.</span>
         </div>
       )}
 

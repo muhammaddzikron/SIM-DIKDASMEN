@@ -54,11 +54,19 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
     return '';
   });
 
+  // Effective School ID based on selectedSchoolId or logged-in school role
+  const effectiveSchoolId = useMemo(() => {
+    if (userRole === 'Sekolah' && userSekolahId) {
+      return userSekolahId;
+    }
+    return selectedSchoolId;
+  }, [userRole, userSekolahId, selectedSchoolId]);
+
   // Selected school object for Beranda Sekolah view
   const selectedSchool = useMemo<Sekolah | undefined>(() => {
-    if (!selectedSchoolId) return undefined;
-    return data.sekolah.find((s) => s.id === selectedSchoolId);
-  }, [data.sekolah, selectedSchoolId]);
+    if (!effectiveSchoolId) return undefined;
+    return data.sekolah.find((s) => s.id === effectiveSchoolId);
+  }, [data.sekolah, effectiveSchoolId]);
 
   // Cabang for selected school
   const cabangForSchool = useMemo(() => {
@@ -68,33 +76,39 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
 
   // Teachers in selected school
   const schoolGuruList = useMemo(() => {
-    if (!selectedSchoolId) return [];
-    return data.guru.filter((g) => g.schoolId === selectedSchoolId);
-  }, [data.guru, selectedSchoolId]);
+    if (!effectiveSchoolId) return [];
+    return data.guru.filter((g) => g.schoolId === effectiveSchoolId);
+  }, [data.guru, effectiveSchoolId]);
+
+  // Tendik in selected school
+  const schoolTendikList = useMemo(() => {
+    if (!effectiveSchoolId) return [];
+    return (data.tendik || []).filter((t) => t.schoolId === effectiveSchoolId);
+  }, [data.tendik, effectiveSchoolId]);
 
   // Students in selected school
   const schoolSiswaList = useMemo(() => {
-    if (!selectedSchoolId) return [];
-    return data.siswa.filter((s) => s.schoolId === selectedSchoolId);
-  }, [data.siswa, selectedSchoolId]);
+    if (!effectiveSchoolId) return [];
+    return data.siswa.filter((s) => s.schoolId === effectiveSchoolId);
+  }, [data.siswa, effectiveSchoolId]);
 
   // Active Principal in selected school
   const activePrincipal = useMemo(() => {
-    if (!selectedSchoolId) return undefined;
-    return data.kepalaSekolah.find((k) => k.schoolId === selectedSchoolId && k.status === 'Aktif');
-  }, [data.kepalaSekolah, selectedSchoolId]);
+    if (!effectiveSchoolId) return undefined;
+    return data.kepalaSekolah.find((k) => k.schoolId === effectiveSchoolId && k.status === 'Aktif');
+  }, [data.kepalaSekolah, effectiveSchoolId]);
 
   // SK count for selected school
   const schoolSKCount = useMemo(() => {
-    if (!selectedSchoolId) return 0;
+    if (!effectiveSchoolId) return 0;
     const guruIds = new Set(schoolGuruList.map((g) => g.id));
     const skgCount = data.skGuru.filter((sk) => guruIds.has(sk.guruId) && sk.status === 'Terbit').length;
     const skksCount = data.skKepalaSekolah.filter((sk) => {
       const ks = data.kepalaSekolah.find((k) => k.id === sk.kepalaSekolahId);
-      return ks?.schoolId === selectedSchoolId && sk.status === 'Terbit';
+      return ks?.schoolId === effectiveSchoolId && sk.status === 'Terbit';
     }).length;
     return skgCount + skksCount;
-  }, [selectedSchoolId, schoolGuruList, data.skGuru, data.skKepalaSekolah, data.kepalaSekolah]);
+  }, [effectiveSchoolId, schoolGuruList, data.skGuru, data.skKepalaSekolah, data.kepalaSekolah]);
 
   // Category Capability Details for selected school
   const selectedSchoolCategoryDetails = useMemo(() => {
@@ -296,37 +310,51 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* View Switcher Bar */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Building className="text-blue-600" size={18} />
-          <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">Pilih Beranda Sekolah / Tampilan:</span>
+      {userRole === 'Sekolah' ? (
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Building className="text-blue-600" size={18} />
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Beranda & Profil Resmi: <strong className="text-blue-700">{selectedSchool?.name || 'Sekolah Anda'}</strong>
+            </span>
+          </div>
+          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1">
+            <ShieldCheck size={12} /> Akun Login Sekolah Aktif
+          </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setSelectedSchoolId('')}
-            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-              selectedSchoolId === ''
-                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 text-white border-emerald-500/30 shadow-md'
-                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            Ringkasan Seluruh Kabupaten
-          </button>
-          
-          <select
-            value={selectedSchoolId}
-            onChange={(e) => setSelectedSchoolId(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
-          >
-            <option value="">-- Mode Beranda Sekolah --</option>
-            {data.sekolah.map((s) => (
-              <option key={s.id} value={s.id}>
-                Beranda {s.name} ({s.level})
-              </option>
-            ))}
-          </select>
+      ) : (
+        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Building className="text-blue-600" size={18} />
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">Pilih Beranda Sekolah / Tampilan:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setSelectedSchoolId('')}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                selectedSchoolId === ''
+                  ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 text-white border-emerald-500/30 shadow-md'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              Ringkasan Seluruh Kabupaten
+            </button>
+            
+            <select
+              value={selectedSchoolId}
+              onChange={(e) => setSelectedSchoolId(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+            >
+              <option value="">-- Mode Beranda Sekolah --</option>
+              {data.sekolah.map((s) => (
+                <option key={s.id} value={s.id}>
+                  Beranda {s.name} ({s.level})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* RENDER BERANDA SEKOLAH IF A SCHOOL IS SELECTED */}
       {selectedSchool ? (
@@ -479,30 +507,70 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
             </div>
           )}
 
-          {/* Key Stats Grid for Selected School */}
+          {/* Key Stats Grid for Selected School: Kepala Sekolah, Guru, Tenaga Kependidikan, Siswa */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div onClick={() => onNavigateToTab('guru')} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-500 cursor-pointer transition-all">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Guru Sekolah</span>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{schoolGuruList.length} <span className="text-xs font-normal text-slate-400">Guru</span></h3>
+            <div
+              onClick={() => onNavigateToTab('kepalaSekolah')}
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-500 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Kepala Sekolah</span>
+                <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <GraduationCap size={16} />
+                </div>
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 mt-1 line-clamp-1">{activePrincipal?.name || 'Belum diisi'}</h3>
+              <span className="text-[10px] text-indigo-600 font-bold block mt-1">
+                {activePrincipal ? `Status: ${activePrincipal.status}` : 'Belum Ada KS'}
+              </span>
+            </div>
+
+            <div
+              onClick={() => onNavigateToTab('guru')}
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-500 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Guru</span>
+                <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  <Users2 size={16} />
+                </div>
+              </div>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">
+                {schoolGuruList.length} <span className="text-xs font-normal text-slate-400">Guru</span>
+              </h3>
               <span className="text-[10px] text-emerald-600 font-bold block mt-1">Terdaftar di SIM</span>
             </div>
 
-            <div onClick={() => onNavigateToTab('siswa')} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-500 cursor-pointer transition-all">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Siswa Sekolah</span>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{schoolSiswaList.length} <span className="text-xs font-normal text-slate-400">Siswa</span></h3>
+            <div
+              onClick={() => onNavigateToTab('tendik')}
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-amber-500 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Tenaga Kependidikan</span>
+                <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                  <UsersIcon size={16} />
+                </div>
+              </div>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">
+                {schoolTendikList.length} <span className="text-xs font-normal text-slate-400">Tendik</span>
+              </h3>
+              <span className="text-[10px] text-amber-600 font-bold block mt-1">Staf & Administrasi</span>
+            </div>
+
+            <div
+              onClick={() => onNavigateToTab('siswa')}
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-500 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Siswa</span>
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <School size={16} />
+                </div>
+              </div>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">
+                {schoolSiswaList.length} <span className="text-xs font-normal text-slate-400">Siswa</span>
+              </h3>
               <span className="text-[10px] text-blue-600 font-bold block mt-1">Aktif Belajar</span>
-            </div>
-
-            <div onClick={() => onNavigateToTab('kepalaSekolah')} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-500 cursor-pointer transition-all">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Kepala Sekolah</span>
-              <h3 className="text-sm font-bold text-slate-800 mt-1 line-clamp-1">{activePrincipal?.name || 'Belum diisi'}</h3>
-              <span className="text-[10px] text-indigo-600 font-bold block mt-1">{activePrincipal ? `Status: ${activePrincipal.status}` : '-'}</span>
-            </div>
-
-            <div onClick={() => onNavigateToTab('skGuru')} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-violet-500 cursor-pointer transition-all">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">SK Terbit</span>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{schoolSKCount} <span className="text-xs font-normal text-slate-400">SK</span></h3>
-              <span className="text-[10px] text-violet-600 font-bold block mt-1">Dokumen Lengkap</span>
             </div>
           </div>
 
