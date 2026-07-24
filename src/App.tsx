@@ -17,7 +17,7 @@ import Dashboard from './components/Dashboard';
 import CrudView from './components/CrudView';
 import RecycleBinView from './components/RecycleBinView';
 import MutasiView from './components/MutasiView';
-import { ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, Database, FolderGit, Globe } from 'lucide-react';
+import { ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, Database, FolderGit, Globe, SlidersHorizontal, UserCheck } from 'lucide-react';
 
 const TAB_TO_TABLE_MAP: Record<string, TableName> = {
   users: 'Users',
@@ -801,8 +801,8 @@ export default function App() {
       {/* Main Column */}
       <div className="flex-1 flex flex-col overflow-hidden h-full">
         {/* HEADER */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10">
-          <div className="flex items-center gap-3">
+        <header className="min-h-[56px] py-2 bg-white border-b border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between px-3 sm:px-6 gap-2.5 sm:gap-4 shrink-0 z-10 shadow-2xs">
+          <div className="flex items-center justify-between md:justify-start gap-2 sm:gap-3 flex-wrap">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
               {currentTab === 'dashboard'
                 ? 'Ringkasan Statistik Real-time'
@@ -818,11 +818,14 @@ export default function App() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between md:justify-end gap-2 sm:gap-3 flex-wrap">
             {/* Interactive Role Simulator */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-xs flex-wrap">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Simulasi Peran:</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50/90 hover:bg-slate-100/90 border border-slate-200/90 rounded-lg p-1.5 sm:px-2.5 sm:py-1.5 shadow-2xs transition-all max-w-full flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                <SlidersHorizontal size={13} className="text-emerald-600 shrink-0" />
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-slate-600 uppercase tracking-tight">
+                  Simulasi<span className="hidden xs:inline"> Peran</span>:
+                </span>
                 <select
                   value={activeRole}
                   onChange={(e) => {
@@ -882,7 +885,7 @@ export default function App() {
                       syncData(accessToken, spreadsheetId);
                     }
                   }}
-                  className="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:outline-none cursor-pointer outline-none"
+                  className="bg-white sm:bg-transparent border border-slate-200 sm:border-none text-[11px] sm:text-xs font-bold text-slate-900 rounded sm:rounded-none px-1.5 py-0.5 focus:outline-none cursor-pointer outline-none hover:text-emerald-700 transition-colors"
                 >
                   <option value="Super Admin">Super Admin</option>
                   <option value="Admin">Admin</option>
@@ -893,8 +896,10 @@ export default function App() {
 
               {/* Sub-selector for Sekolah when Role === 'Sekolah' */}
               {activeRole === 'Sekolah' && (
-                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300">
-                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">Nama Sekolah:</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 pl-1.5 sm:pl-2 border-l border-slate-300/80 min-w-0 max-w-full">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold text-emerald-700 uppercase tracking-tight shrink-0">
+                    Sekolah:
+                  </span>
                   <select
                     value={userProfile?.sekolahId || (data.sekolah[0]?.id ?? 'sch-1')}
                     onChange={(e) => {
@@ -927,7 +932,7 @@ export default function App() {
                         }
                       }
                     }}
-                    className="bg-transparent border-none text-[10px] font-extrabold text-emerald-900 focus:outline-none cursor-pointer outline-none max-w-[220px] truncate"
+                    className="bg-white sm:bg-transparent border border-emerald-300 sm:border-none text-[11px] sm:text-xs font-extrabold text-emerald-950 rounded sm:rounded-none px-1.5 py-0.5 max-w-[130px] min-[400px]:max-w-[180px] sm:max-w-[220px] md:max-w-[280px] truncate focus:outline-none cursor-pointer"
                   >
                     {data.sekolah.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -940,8 +945,10 @@ export default function App() {
 
               {/* Sub-selector for Cabang when Role === 'Cabang' */}
               {activeRole === 'Cabang' && data.cabang.length > 0 && (
-                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300">
-                  <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wide">Pilih Cabang:</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 pl-1.5 sm:pl-2 border-l border-slate-300/80 min-w-0 max-w-full">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold text-teal-700 uppercase tracking-tight shrink-0">
+                    Cabang:
+                  </span>
                   <select
                     value={userProfile?.cabangId || (data.cabang[0]?.id ?? 'cab-1')}
                     onChange={(e) => {
@@ -972,7 +979,7 @@ export default function App() {
                         }
                       }
                     }}
-                    className="bg-transparent border-none text-[10px] font-extrabold text-teal-900 focus:outline-none cursor-pointer outline-none max-w-[220px] truncate"
+                    className="bg-white sm:bg-transparent border border-teal-300 sm:border-none text-[11px] sm:text-xs font-extrabold text-teal-950 rounded sm:rounded-none px-1.5 py-0.5 max-w-[130px] min-[400px]:max-w-[180px] sm:max-w-[220px] md:max-w-[280px] truncate focus:outline-none cursor-pointer"
                   >
                     {data.cabang.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -984,12 +991,14 @@ export default function App() {
               )}
             </div>
 
-            <div className="text-right">
-              <p className="text-xs font-bold text-slate-800 leading-none">{userProfile?.name || user?.displayName || 'User'}</p>
-              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1">{activeRole}</p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 shadow-sm flex items-center justify-center font-black text-slate-700 text-xs uppercase shrink-0">
-              {userProfile?.name ? userProfile.name.charAt(0) : user?.displayName ? user.displayName.charAt(0) : 'U'}
+            <div className="flex items-center gap-2">
+              <div className="text-right hidden min-[480px]:block">
+                <p className="text-xs font-bold text-slate-800 leading-none truncate max-w-[150px]">{userProfile?.name || user?.displayName || 'User'}</p>
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1">{activeRole}</p>
+              </div>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 shadow-2xs flex items-center justify-center font-black text-slate-700 text-xs uppercase shrink-0">
+                {userProfile?.name ? userProfile.name.charAt(0) : user?.displayName ? user.displayName.charAt(0) : 'U'}
+              </div>
             </div>
           </div>
         </header>
