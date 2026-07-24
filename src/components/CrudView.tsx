@@ -22,6 +22,8 @@ import {
   Clock,
   ShieldCheck,
   FileCheck,
+  Building,
+  ExternalLink,
 } from 'lucide-react';
 import { uploadFileToDrive } from '../lib/drive';
 
@@ -613,7 +615,7 @@ export default function CrudView({
           { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Pengangkatan Guru Tetap...', required: true },
           { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
           { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
-          ...(userRole === 'Admin' || userRole === 'Super Admin'
+          ...((userRole === 'Admin' || userRole === 'Super Admin'
             ? [
                 { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi (otomatis jika dikosongkan)...' },
                 {
@@ -628,7 +630,7 @@ export default function CrudView({
                   ],
                 },
               ]
-            : []),
+            : []) as FormField[]),
           { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 
@@ -657,7 +659,7 @@ export default function CrudView({
           { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Tenaga Kependidikan...', required: true },
           { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
           { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
-          ...(userRole === 'Admin' || userRole === 'Super Admin'
+          ...((userRole === 'Admin' || userRole === 'Super Admin'
             ? [
                 { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi...' },
                 {
@@ -672,7 +674,7 @@ export default function CrudView({
                   ],
                 },
               ]
-            : []),
+            : []) as FormField[]),
           { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 
@@ -701,7 +703,7 @@ export default function CrudView({
           { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Jabatan Kepala Sekolah...', required: true },
           { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
           { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
-          ...(userRole === 'Admin' || userRole === 'Super Admin'
+          ...((userRole === 'Admin' || userRole === 'Super Admin'
             ? [
                 { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi...' },
                 {
@@ -716,7 +718,7 @@ export default function CrudView({
                   ],
                 },
               ]
-            : []),
+            : []) as FormField[]),
           { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 

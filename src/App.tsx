@@ -535,7 +535,7 @@ export default function App() {
     const mappedTable = TAB_TO_TABLE_MAP[currentTab];
     if (!mappedTable) return;
 
-    const newRecord = {
+    const newRecord: any = {
       ...record,
       id: record.id || 'rec-' + Math.random().toString(36).substr(2, 9),
       createdAt: record.createdAt || new Date().toISOString(),
