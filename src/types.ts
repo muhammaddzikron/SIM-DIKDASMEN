@@ -161,7 +161,11 @@ export interface SKGuru {
   guruId: string;
   fileUrl: string;
   fileId: string;
-  status: 'Terbit' | 'Belum Terbit';
+  status: 'Terbit' | 'Belum Terbit' | 'Ditolak' | string;
+  submissionType?: 'Baru' | 'Lama' | string;
+  nbmUrl?: string;
+  ijazahUrl?: string;
+  skLamaUrl?: string;
 }
 
 export interface SKTenagaKependidikan {
@@ -173,7 +177,11 @@ export interface SKTenagaKependidikan {
   tendikId: string;
   fileUrl: string;
   fileId: string;
-  status: 'Terbit' | 'Belum Terbit';
+  status: 'Terbit' | 'Belum Terbit' | 'Ditolak' | string;
+  submissionType?: 'Baru' | 'Lama' | string;
+  nbmUrl?: string;
+  ijazahUrl?: string;
+  skLamaUrl?: string;
 }
 
 export interface SKKepalaSekolah {
@@ -185,7 +193,11 @@ export interface SKKepalaSekolah {
   kepalaSekolahId: string;
   fileUrl: string;
   fileId: string;
-  status: 'Terbit' | 'Belum Terbit';
+  status: 'Terbit' | 'Belum Terbit' | 'Ditolak' | string;
+  submissionType?: 'Baru' | 'Lama' | string;
+  nbmUrl?: string;
+  ijazahUrl?: string;
+  skLamaUrl?: string;
 }
 
 export interface Notifikasi {

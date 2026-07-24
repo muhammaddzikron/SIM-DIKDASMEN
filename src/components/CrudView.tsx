@@ -18,6 +18,10 @@ import {
   Printer,
   Upload,
   ArrowRightLeft,
+  CheckCircle,
+  Clock,
+  ShieldCheck,
+  FileCheck,
 } from 'lucide-react';
 import { uploadFileToDrive } from '../lib/drive';
 
@@ -532,80 +536,134 @@ export default function CrudView({
 
       case 'SKGuru':
         return [
-          { name: 'skNumber', label: 'Nomor SK', type: 'text', placeholder: 'Nomor SK Resmi...', required: true },
-          { name: 'skDate', label: 'Tanggal SK Terbit', type: 'date', required: true },
-          { name: 'skEndDate', label: 'Tanggal SK Selesai', type: 'date', required: true },
-          { name: 'title', label: 'Perihal SK', type: 'text', placeholder: 'Misal: SK Pengangkatan Guru Tetap...', required: true },
+          {
+            name: 'submissionType',
+            label: 'Jenis Pengajuan SK',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'Baru', label: 'Pengajuan SK Baru (Untuk Guru Baru)' },
+              { value: 'Lama', label: 'Pengajuan Perpanjangan SK / SK Lama' },
+            ],
+          },
           {
             name: 'guruId',
             label: 'Penerima Guru',
             type: 'select',
             required: true,
-            options: data.guru.map((g) => ({ value: g.id, label: g.name })),
+            options: data.guru.map((g) => {
+              const sch = data.sekolah.find((s) => s.id === g.schoolId);
+              return { value: g.id, label: `${g.name}${sch ? ` - ${sch.name}` : ''}` };
+            }),
           },
-          {
-            name: 'status',
-            label: 'Status Penerbitan',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'Terbit', label: 'Terbit' },
-              { value: 'Belum Terbit', label: 'Belum Terbit' },
-            ],
-          },
-          { name: 'fileUrl', label: 'Link File SK (Terupload otomatis)', type: 'file' },
+          { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Pengangkatan Guru Tetap...', required: true },
+          { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
+          { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
+          ...(userRole === 'Admin' || userRole === 'Super Admin'
+            ? [
+                { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi (otomatis jika dikosongkan)...' },
+                {
+                  name: 'status',
+                  label: 'Status Penerbitan SK (Approval Admin)',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { value: 'Belum Terbit', label: 'Belum Terbit (Pending Approval Admin)' },
+                    { value: 'Terbit', label: 'Terbit (Disetujui Admin)' },
+                    { value: 'Ditolak', label: 'Ditolak Admin' },
+                  ],
+                },
+              ]
+            : []),
+          { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 
       case 'SKTenagaKependidikan':
         return [
-          { name: 'skNumber', label: 'Nomor SK', type: 'text', placeholder: 'Nomor SK Resmi...', required: true },
-          { name: 'skDate', label: 'Tanggal SK Terbit', type: 'date', required: true },
-          { name: 'skEndDate', label: 'Tanggal SK Selesai', type: 'date', required: true },
-          { name: 'title', label: 'Perihal SK', type: 'text', placeholder: 'Misal: SK Pengangkatan Tenaga Kependidikan...', required: true },
+          {
+            name: 'submissionType',
+            label: 'Jenis Pengajuan SK',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'Baru', label: 'Pengajuan SK Baru (Untuk Karyawan/Tendik Baru)' },
+              { value: 'Lama', label: 'Pengajuan Perpanjangan SK / SK Lama' },
+            ],
+          },
           {
             name: 'tendikId',
             label: 'Penerima Tenaga Kependidikan',
             type: 'select',
             required: true,
-            options: (data.tendik || []).map((t) => ({ value: t.id, label: `${t.name} (${t.position || 'Tendik'})` })),
+            options: (data.tendik || []).map((t) => {
+              const sch = data.sekolah.find((s) => s.id === t.schoolId);
+              return { value: t.id, label: `${t.name} (${t.position || 'Tendik'})${sch ? ` - ${sch.name}` : ''}` };
+            }),
           },
-          {
-            name: 'status',
-            label: 'Status Penerbitan',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'Terbit', label: 'Terbit' },
-              { value: 'Belum Terbit', label: 'Belum Terbit' },
-            ],
-          },
-          { name: 'fileUrl', label: 'Link File SK (Terupload otomatis)', type: 'file' },
+          { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Tenaga Kependidikan...', required: true },
+          { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
+          { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
+          ...(userRole === 'Admin' || userRole === 'Super Admin'
+            ? [
+                { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi...' },
+                {
+                  name: 'status',
+                  label: 'Status Penerbitan SK (Approval Admin)',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { value: 'Belum Terbit', label: 'Belum Terbit (Pending Approval Admin)' },
+                    { value: 'Terbit', label: 'Terbit (Disetujui Admin)' },
+                    { value: 'Ditolak', label: 'Ditolak Admin' },
+                  ],
+                },
+              ]
+            : []),
+          { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 
       case 'SKKepalaSekolah':
         return [
-          { name: 'skNumber', label: 'Nomor SK', type: 'text', placeholder: 'Nomor SK Resmi...', required: true },
-          { name: 'skDate', label: 'Tanggal SK Terbit', type: 'date', required: true },
-          { name: 'skEndDate', label: 'Tanggal SK Selesai', type: 'date', required: true },
-          { name: 'title', label: 'Perihal SK', type: 'text', placeholder: 'Misal: SK Pengangkatan Kepala Sekolah...', required: true },
+          {
+            name: 'submissionType',
+            label: 'Jenis Pengajuan SK',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'Baru', label: 'Pengajuan SK Kepala Sekolah Baru' },
+              { value: 'Lama', label: 'Pengajuan Perpanjangan SK Kepala Sekolah / SK Lama' },
+            ],
+          },
           {
             name: 'kepalaSekolahId',
             label: 'Penerima Kepala Sekolah',
             type: 'select',
             required: true,
-            options: data.kepalaSekolah.map((ks) => ({ value: ks.id, label: ks.name })),
+            options: data.kepalaSekolah.map((ks) => {
+              const sch = data.sekolah.find((s) => s.id === ks.schoolId);
+              return { value: ks.id, label: `${ks.name}${sch ? ` - ${sch.name}` : ''}` };
+            }),
           },
-          {
-            name: 'status',
-            label: 'Status Penerbitan',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'Terbit', label: 'Terbit' },
-              { value: 'Belum Terbit', label: 'Belum Terbit' },
-            ],
-          },
-          { name: 'fileUrl', label: 'Link File SK (Terupload otomatis)', type: 'file' },
+          { name: 'title', label: 'Perihal / Judul Pengajuan SK', type: 'text', placeholder: 'Misal: Pengajuan SK Jabatan Kepala Sekolah...', required: true },
+          { name: 'skDate', label: 'Tanggal Pengajuan / TMT SK', type: 'date', required: true },
+          { name: 'skEndDate', label: 'Tanggal Berakhir Masa Berlaku SK', type: 'date', required: true },
+          ...(userRole === 'Admin' || userRole === 'Super Admin'
+            ? [
+                { name: 'skNumber', label: 'Nomor SK Resmi (Otomatis/Disi Admin)', type: 'text', placeholder: 'Nomor SK terbit resmi...' },
+                {
+                  name: 'status',
+                  label: 'Status Penerbitan SK (Approval Admin)',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { value: 'Belum Terbit', label: 'Belum Terbit (Pending Approval Admin)' },
+                    { value: 'Terbit', label: 'Terbit (Disetujui Admin)' },
+                    { value: 'Ditolak', label: 'Ditolak Admin' },
+                  ],
+                },
+              ]
+            : []),
+          { name: 'fileUrl', label: 'Dokumen SK Resmi / Draft SK (Upload ke Drive)', type: 'file' },
         ];
 
       case 'Notifikasi':
@@ -796,6 +854,12 @@ export default function CrudView({
       }
     });
 
+    if (['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName)) {
+      defaults.submissionType = 'Baru';
+      defaults.status = 'Belum Terbit';
+      defaults.skNumber = ''; // Deleted from initial submission form; generated on approval
+    }
+
     // Enforce tenant defaults
     if (userRole === 'Cabang' && userCabangId) {
       if (defaults.hasOwnProperty('cabangId')) defaults.cabangId = userCabangId;
@@ -827,8 +891,8 @@ export default function CrudView({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 8. Custom Drag and Drop File Upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper for Uploading SK Attachments (NBM, Ijazah Terakhir, SK Lama)
+  const handleSKFieldUpload = async (fieldName: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -837,16 +901,58 @@ export default function CrudView({
 
     try {
       const res = await uploadFileToDrive(accessToken, driveFolderId, file);
-      setUploadedFileInfo({ name: file.name, url: res.fileUrl, id: res.fileId });
-      setFormData((prev) => ({
-        ...prev,
-        fileUrl: res.fileUrl,
-        fileId: res.fileId,
-      }));
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          [fieldName]: res.fileUrl,
+        };
+        if (fieldName === 'skLamaUrl' || fieldName === 'ijazahUrl' || !prev.fileUrl) {
+          updated.fileUrl = res.fileUrl;
+          updated.fileId = res.fileId;
+        }
+        return updated;
+      });
+      if (fieldName === 'fileUrl') {
+        setUploadedFileInfo({ name: file.name, url: res.fileUrl, id: res.fileId });
+      }
     } catch (err: any) {
-      setFormError(`Gagal upload ke Drive: ${err.message || err}`);
+      setFormError(`Gagal upload berkas ke Drive: ${err.message || err}`);
     } finally {
       setUploadProgress(false);
+    }
+  };
+
+  // 8. Custom Drag and Drop File Upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await handleSKFieldUpload('fileUrl', e);
+  };
+
+  // Quick Approval Handler for Admin
+  const handleQuickApproveSK = async (item: any) => {
+    const year = new Date().getFullYear();
+    const randNum = Math.floor(100 + Math.random() * 900);
+    const code = tableName === 'SKGuru' ? 'SK-GURU' : tableName === 'SKTenagaKependidikan' ? 'SK-TENDIK' : 'SK-KS';
+    const defaultSkNum = item.skNumber || `${randNum}/${code}/DIKDASMEN/${year}`;
+    
+    const inputSkNum = window.prompt(
+      `Setujui & Terbitkan Pengajuan SK untuk "${item.title || 'SK'}"?\n\nMasukkan Nomor SK Resmi yang akan diterbitkan:`,
+      defaultSkNum
+    );
+    if (inputSkNum !== null) {
+      const updated = {
+        ...item,
+        status: 'Terbit',
+        skNumber: inputSkNum || defaultSkNum,
+      };
+      try {
+        setFormLoading(true);
+        await onEdit(item.id || item.key, updated);
+        alert(`✔️ SK Berhasil Diterbitkan!\nNomor SK Resmi: ${updated.skNumber}`);
+      } catch (err: any) {
+        alert(`Gagal menerbitkan SK: ${err.message || err}`);
+      } finally {
+        setFormLoading(false);
+      }
     }
   };
 
@@ -856,11 +962,26 @@ export default function CrudView({
     setFormLoading(true);
     setFormError(null);
 
+    let saveData = { ...formData };
+
+    if (['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName)) {
+      if (userRole !== 'Admin' && userRole !== 'Super Admin' && !editingId) {
+        saveData.skNumber = ''; // Number deleted from initial form; generated on admin approval
+        saveData.status = 'Belum Terbit'; // Set status based on admin approval
+      } else if (saveData.status === 'Terbit' && (!saveData.skNumber || saveData.skNumber.trim() === '')) {
+        // Auto generate SK Number if admin approved without typing a number
+        const year = new Date().getFullYear();
+        const randNum = Math.floor(100 + Math.random() * 900);
+        const code = tableName === 'SKGuru' ? 'SK-GURU' : tableName === 'SKTenagaKependidikan' ? 'SK-TENDIK' : 'SK-KS';
+        saveData.skNumber = `${randNum}/${code}/DIKDASMEN/${year}`;
+      }
+    }
+
     try {
       if (editingId) {
-        await onEdit(editingId, formData);
+        await onEdit(editingId, saveData);
       } else {
-        await onAdd(formData);
+        await onAdd(saveData);
       }
       setIsModalOpen(false);
     } catch (err: any) {
@@ -1260,6 +1381,65 @@ export default function CrudView({
 
     // Link/URL styling
     if (key === 'fileUrl') {
+      const isSK = ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName);
+      const skLama = item.skLamaUrl;
+      const nbm = item.nbmUrl;
+      const ijazah = item.ijazahUrl;
+
+      if (isSK) {
+        return (
+          <div className="flex flex-col gap-1 text-[11px]">
+            {val ? (
+              <a
+                href={val}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+              >
+                <FileDown size={13} /> Dokumen SK
+              </a>
+            ) : null}
+            <div className="flex flex-wrap gap-1">
+              {skLama && (
+                <a
+                  href={skLama}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded text-[10px] font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Eye size={10} /> SK Lama
+                </a>
+              )}
+              {nbm && (
+                <a
+                  href={nbm}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-1.5 py-0.5 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded text-[10px] font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Eye size={10} /> NBM
+                </a>
+              )}
+              {ijazah && (
+                <a
+                  href={ijazah}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded text-[10px] font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Eye size={10} /> Ijazah
+                </a>
+              )}
+            </div>
+            {!val && !skLama && !nbm && !ijazah && (
+              <span className="text-slate-400 text-[10px] italic">-</span>
+            )}
+          </div>
+        );
+      }
+
+      if (!val) return <span className="text-slate-400 font-mono text-[11px]">-</span>;
+
       return (
         <a
           href={val}
@@ -1302,14 +1482,46 @@ export default function CrudView({
       return <span className="text-slate-400 font-mono text-[11px]">-</span>;
     }
 
+    // Custom rendering for submissionType, skNumber, and status in SK tables
+    if (key === 'submissionType') {
+      if (val === 'Lama' || val === 'Perpanjangan') {
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 inline-block">
+            SK Perpanjangan
+          </span>
+        );
+      }
+      return (
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-900 border border-sky-200 inline-block">
+          SK Baru
+        </span>
+      );
+    }
+
+    if (key === 'skNumber') {
+      if (!val || val === 'Draft' || val === '') {
+        return (
+          <span className="text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-medium italic block">
+            (Akan muncul setelah approval)
+          </span>
+        );
+      }
+      return <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{String(val)}</span>;
+    }
+
     // Status Styling
     if (key === 'status') {
       let badgeClass = 'bg-slate-100 text-slate-700';
-      if (val === 'Aktif' || val === 'Terbit' || val === 'Negeri') {
-        badgeClass = 'bg-teal-100 text-teal-800 font-bold';
-      } else if (val === 'Selesai' || val === 'Belum Terbit' || val === 'Swasta' || val === 'Lulus') {
-        badgeClass = 'bg-amber-100 text-amber-800 font-semibold';
-      } else if (val === 'Cuti') {
+      if (val === 'Terbit' || val === 'Disetujui' || val === 'Aktif' || val === 'Negeri') {
+        badgeClass = 'bg-teal-100 text-teal-900 border border-teal-300 font-black';
+        return <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${badgeClass}`}>{val === 'Terbit' ? 'TERBIT (APPROVED)' : val}</span>;
+      } else if (val === 'Belum Terbit' || val === 'Swasta' || val === 'Lulus') {
+        badgeClass = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+        return <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${badgeClass}`}>{val === 'Belum Terbit' ? 'PENDING APPROVAL' : val}</span>;
+      } else if (val === 'Ditolak') {
+        badgeClass = 'bg-rose-100 text-rose-900 border border-rose-300 font-bold';
+        return <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase ${badgeClass}`}>DITOLAK ADMIN</span>;
+      } else if (val === 'Cuti' || val === 'Selesai') {
         badgeClass = 'bg-rose-100 text-rose-800';
       } else if (val === 'Mutasi') {
         badgeClass = 'bg-purple-100 text-purple-800 font-bold border border-purple-200';
@@ -1338,11 +1550,11 @@ export default function CrudView({
       case 'Siswa':
         return { name: 'Nama Siswa', nisn: 'NISN', schoolId: 'Sekolah', class: 'Kelas', gender: 'Gender', status: 'Status' };
       case 'SKGuru':
-        return { guruId: 'Nama Lengkap dan Gelar', skNumber: 'No SK', skDate: 'Tanggal SK Terbit', skEndDate: 'Tanggal SK Selesai', fileUrl: 'Dokumen SK', status: 'Status SK' };
+        return { guruId: 'Nama Guru & Gelar', submissionType: 'Jenis Pengajuan', skNumber: 'No SK Resmi', skDate: 'TMT SK / Tanggal', skEndDate: 'Tanggal Berakhir', fileUrl: 'Dokumen SK', status: 'Status Approval' };
       case 'SKTenagaKependidikan':
-        return { tendikId: 'Nama Lengkap dan Gelar', skNumber: 'No SK', skDate: 'Tanggal SK Terbit', skEndDate: 'Tanggal SK Selesai', fileUrl: 'Dokumen SK', status: 'Status SK' };
+        return { tendikId: 'Nama Tendik & Gelar', submissionType: 'Jenis Pengajuan', skNumber: 'No SK Resmi', skDate: 'TMT SK / Tanggal', skEndDate: 'Tanggal Berakhir', fileUrl: 'Dokumen SK', status: 'Status Approval' };
       case 'SKKepalaSekolah':
-        return { kepalaSekolahId: 'Nama Lengkap dan Gelar', skNumber: 'No SK', skDate: 'Tanggal SK Terbit', skEndDate: 'Tanggal SK Selesai', fileUrl: 'Dokumen SK', status: 'Status SK' };
+        return { kepalaSekolahId: 'Nama Kepala Sekolah', submissionType: 'Jenis Pengajuan', skNumber: 'No SK Resmi', skDate: 'TMT SK / Tanggal', skEndDate: 'Tanggal Berakhir', fileUrl: 'Dokumen SK', status: 'Status Approval' };
       case 'Notifikasi':
         return { title: 'Judul', message: 'Isi Notifikasi', type: 'Tipe', isRead: 'Dibaca' };
       case 'LogAktivitas':
@@ -1605,6 +1817,17 @@ export default function CrudView({
 
                     {tableName !== 'LogAktivitas' && (
                       <td className="py-2 px-3 text-center flex items-center justify-center gap-1.5 print:hidden">
+                        {(userRole === 'Admin' || userRole === 'Super Admin') &&
+                          ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) &&
+                          item.status !== 'Terbit' && (
+                            <button
+                              onClick={() => handleQuickApproveSK(item)}
+                              className="p-1 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                              title="Setujui & Terbitkan SK Ini"
+                            >
+                              <CheckCircle size={11} /> Approve
+                            </button>
+                        )}
                         <button
                           onClick={() => handleOpenEdit(item)}
                           className="p-1 text-blue-600 hover:bg-blue-500/10 rounded transition-colors cursor-pointer"
@@ -1795,13 +2018,153 @@ export default function CrudView({
                 </div>
               )}
 
+              {/* SK Specific Info Banner */}
+              {['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) && (
+                <div className="p-3.5 bg-sky-500/10 border border-sky-500/20 text-sky-800 dark:text-sky-300 rounded-xl text-xs space-y-1.5 animate-fadeIn">
+                  <div className="font-bold flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
+                    <Clock size={15} className="shrink-0 text-sky-600 dark:text-sky-400" />
+                    <span>Ketentuan Pengajuan & Penerbitan SK:</span>
+                  </div>
+                  <ul className="list-disc list-inside text-[11px] space-y-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <li>
+                      <strong>Nomor SK</strong>: Dihapus/disembunyikan pada pengajuan awal. Nomor SK resmi akan diterbitkan otomatis setelah disetujui Admin.
+                    </li>
+                    <li>
+                      <strong>Status Penerbitan</strong>: Awalnya <em>"Belum Terbit"</em> dan diperbarui otomatis sesuai approval Admin.
+                    </li>
+                  </ul>
+                </div>
+              )}
+
               {fields.map((field) => {
-                // If the field is 'fileUrl' and we're in SK table, render a beautiful Google Drive drag & drop area
                 if (field.type === 'file') {
+                  const isSKTable = ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName);
+
+                  if (isSKTable) {
+                    return (
+                      <div key={field.name} className="p-4 border rounded-xl space-y-3.5 bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100 pb-1 border-b border-slate-200 dark:border-slate-800">
+                          <FileCheck size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Dokumen Lampiran Persyaratan ({formData.submissionType === 'Lama' ? 'Pengajuan SK Perpanjangan / Lama' : 'Pengajuan SK Baru'})</span>
+                        </div>
+
+                        {formData.submissionType === 'Lama' ? (
+                          /* JIKA LAMA: HANYA MUNCUL UPLOAD SK LAMA */
+                          <div className="space-y-1.5 bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                              <span>Dokumen SK Lama / SK Pengangkatan Sebelumnya</span>
+                              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900">(Wajib untuk SK Lama)</span>
+                            </label>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">Silakan upload berkas/scan SK Lama yang akan diperpanjang.</p>
+                            <div className="flex gap-2 pt-1">
+                              <input
+                                type="text"
+                                value={formData.skLamaUrl || ''}
+                                onChange={(e) => {
+                                  handleInputChange('skLamaUrl', e.target.value);
+                                  handleInputChange('fileUrl', e.target.value);
+                                }}
+                                placeholder="Link / URL Dokumen SK Lama..."
+                                required
+                                className="flex-1 border rounded-lg p-2 text-xs bg-white dark:bg-slate-850 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+                              />
+                              <label className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-xs">
+                                <UploadCloud size={14} /> Upload SK Lama
+                                <input
+                                  type="file"
+                                  accept=".pdf,image/*,.doc,.docx"
+                                  onChange={(e) => handleSKFieldUpload('skLamaUrl', e)}
+                                  className="hidden"
+                                />
+                              </label>
+                            </div>
+                            {formData.skLamaUrl && (
+                              <a href={formData.skLamaUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold underline flex items-center gap-1 pt-1">
+                                <Eye size={12} /> Lihat Berkas SK Lama Terupload
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          /* JIKA BARU: MUNCUL UPLOAD NBM DAN IJAZAH TERAKHIR */
+                          <div className="space-y-3">
+                            {/* NBM Field */}
+                            <div className="space-y-1.5 bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                                <span>Kartu NBM (Nomor Baku Muhammadiyah)</span>
+                                <span className="text-[10px] text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-900">(Wajib untuk SK Baru)</span>
+                              </label>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400">Silakan upload scan/foto Kartu NBM resmi.</p>
+                              <div className="flex gap-2 pt-1">
+                                <input
+                                  type="text"
+                                  value={formData.nbmUrl || ''}
+                                  onChange={(e) => handleInputChange('nbmUrl', e.target.value)}
+                                  placeholder="Link / URL Kartu NBM..."
+                                  required
+                                  className="flex-1 border rounded-lg p-2 text-xs bg-white dark:bg-slate-850 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+                                />
+                                <label className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-xs">
+                                  <UploadCloud size={14} /> Upload NBM
+                                  <input
+                                    type="file"
+                                    accept=".pdf,image/*"
+                                    onChange={(e) => handleSKFieldUpload('nbmUrl', e)}
+                                    className="hidden"
+                                  />
+                                </label>
+                              </div>
+                              {formData.nbmUrl && (
+                                <a href={formData.nbmUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold underline flex items-center gap-1 pt-1">
+                                  <Eye size={12} /> Lihat Berkas Kartu NBM Terupload
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Ijazah Terakhir Field */}
+                            <div className="space-y-1.5 bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                                <span>Ijazah Terakhir</span>
+                                <span className="text-[10px] text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded border border-sky-200 dark:border-sky-900">(Wajib untuk SK Baru)</span>
+                              </label>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400">Silakan upload Ijazah Terakhir (S1/S2/SMA/Sederajat).</p>
+                              <div className="flex gap-2 pt-1">
+                                <input
+                                  type="text"
+                                  value={formData.ijazahUrl || ''}
+                                  onChange={(e) => {
+                                    handleInputChange('ijazahUrl', e.target.value);
+                                    if (!formData.skLamaUrl) handleInputChange('fileUrl', e.target.value);
+                                  }}
+                                  placeholder="Link / URL Ijazah Terakhir..."
+                                  required
+                                  className="flex-1 border rounded-lg p-2 text-xs bg-white dark:bg-slate-850 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+                                />
+                                <label className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-xs">
+                                  <UploadCloud size={14} /> Upload Ijazah
+                                  <input
+                                    type="file"
+                                    accept=".pdf,image/*,.doc,.docx"
+                                    onChange={(e) => handleSKFieldUpload('ijazahUrl', e)}
+                                    className="hidden"
+                                  />
+                                </label>
+                              </div>
+                              {formData.ijazahUrl && (
+                                <a href={formData.ijazahUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold underline flex items-center gap-1 pt-1">
+                                  <Eye size={12} /> Lihat Berkas Ijazah Terupload
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={field.name} className="space-y-1">
                       <label className="text-xs font-semibold block text-slate-400">
-                        Dokumen SK Resmi (Upload ke Google Drive)
+                        Dokumen (Upload ke Google Drive)
                       </label>
                       <input
                         type="file"
@@ -1850,7 +2213,7 @@ export default function CrudView({
                           className="p-6 bg-slate-800 hover:bg-slate-800/80 border-2 border-slate-700 border-dashed rounded-xl flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors"
                         >
                           <UploadCloud size={32} className="text-slate-400" />
-                          <span className="text-xs font-bold text-slate-300">Klik untuk upload file SK</span>
+                          <span className="text-xs font-bold text-slate-300">Klik untuk upload file</span>
                           <span className="text-[10px] text-slate-500">Mendukung PDF, Word, Gambar (Otomatis masuk folder Drive)</span>
                         </div>
                       )}
