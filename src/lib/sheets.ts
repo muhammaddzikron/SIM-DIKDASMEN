@@ -20,7 +20,7 @@ export const SHEET_COLUMNS: Record<TableName, string[]> = {
     'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota', 'phone', 'persyarikatanActivity'
   ],
   TenagaKependidikan: [
-    'id', 'name', 'nipm', 'pobDob', 'gender', 'schoolId', 'status', 'position', 'nbm',
+    'id', 'name', 'nipm', 'nip', 'pobDob', 'gender', 'schoolId', 'status', 'position', 'nbm',
     'skNumber', 'tmtAwal', 'education', 'educationProdi', 'address', 'rtRw', 'postalCode',
     'kelurahan', 'kecamatan', 'kabupatenKota', 'phone', 'persyarikatanActivity'
   ],
@@ -32,9 +32,9 @@ export const SHEET_COLUMNS: Record<TableName, string[]> = {
     'id', 'name', 'gender', 'nisn', 'pobDob', 'schoolId', 'class', 'address', 'rtRw',
     'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota', 'status'
   ],
-  SKGuru: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'guruId', 'fileUrl', 'fileId', 'status'],
-  SKTenagaKependidikan: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'tendikId', 'fileUrl', 'fileId', 'status'],
-  SKKepalaSekolah: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'kepalaSekolahId', 'fileUrl', 'fileId', 'status'],
+  SKGuru: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'guruId', 'fileUrl', 'fileId', 'status', 'submissionType', 'nbmUrl', 'ijazahUrl', 'skLamaUrl'],
+  SKTenagaKependidikan: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'tendikId', 'fileUrl', 'fileId', 'status', 'submissionType', 'nbmUrl', 'ijazahUrl', 'skLamaUrl'],
+  SKKepalaSekolah: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'kepalaSekolahId', 'fileUrl', 'fileId', 'status', 'submissionType', 'nbmUrl', 'ijazahUrl', 'skLamaUrl'],
   Notifikasi: ['id', 'title', 'message', 'type', 'isRead', 'createdAt'],
   LogAktivitas: ['id', 'userEmail', 'action', 'details', 'timestamp'],
   Setting: ['key', 'value'],
@@ -134,7 +134,7 @@ export async function initializeDatabase(
     }
   }
 
-  // Ensure headers exist for ALL tables even if the sheets already existed but are blank
+  // Ensure headers exist and are up to date for ALL tables
   const checkBlankTables = (Object.keys(SHEET_COLUMNS) as TableName[]);
   const batchGetRanges = checkBlankTables.map((t) => `${t}!A1:Z1`);
   const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?ranges=${batchGetRanges.map(encodeURIComponent).join('&ranges=')}`;
@@ -146,21 +146,21 @@ export async function initializeDatabase(
   if (getRes.ok) {
     const getData = await getRes.json();
     const valueRanges = getData.valueRanges || [];
-    const blankTables: typeof checkBlankTables = [];
+    const updateHeaderData: { range: string; values: string[][] }[] = [];
 
     checkBlankTables.forEach((table, idx) => {
-      const rangeValues = valueRanges[idx]?.values;
-      if (!rangeValues || rangeValues.length === 0) {
-        blankTables.push(table);
+      const existingHeaders: string[] = valueRanges[idx]?.values?.[0] || [];
+      const expectedHeaders = SHEET_COLUMNS[table];
+      const isMissingColumns = expectedHeaders.some((col) => !existingHeaders.includes(col));
+      if (existingHeaders.length === 0 || isMissingColumns) {
+        updateHeaderData.push({
+          range: `${table}!A1`,
+          values: [expectedHeaders],
+        });
       }
     });
 
-    if (blankTables.length > 0) {
-      const fixHeadersData = blankTables.map((table) => ({
-        range: `${table}!A1`,
-        values: [SHEET_COLUMNS[table]],
-      }));
-
+    if (updateHeaderData.length > 0) {
       await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`, {
         method: 'POST',
         headers: {
@@ -169,7 +169,7 @@ export async function initializeDatabase(
         },
         body: JSON.stringify({
           valueInputOption: 'USER_ENTERED',
-          data: fixHeadersData,
+          data: updateHeaderData,
         }),
       });
     }

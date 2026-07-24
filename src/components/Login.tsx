@@ -169,12 +169,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
         
         {/* Banner Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-[#1E293B] to-slate-800 px-6 py-10 text-center text-white relative">
-          <div className="absolute top-4 right-4 opacity-5">
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-6 py-10 text-center text-white relative">
+          <div className="absolute top-4 right-4 opacity-10">
             <ShieldCheck size={120} />
           </div>
           <div className="flex justify-center mb-3">
-            <div className="bg-white p-1 rounded-2xl border border-white/10 shadow-sm flex items-center justify-center">
+            <div className="bg-white p-1 rounded-2xl border border-white/20 shadow-md flex items-center justify-center">
               <img 
                 src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10" 
                 alt="Logo SIM DIKDASMEN" 
@@ -184,8 +184,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </div>
           </div>
           <h1 className="text-xl font-bold tracking-tight">SIM DIKDASMEN</h1>
-          <p className="text-blue-300 text-xs mt-1 font-medium">Kabupaten Klaten</p>
-          <div className="mt-3.5 inline-block bg-blue-500/20 text-blue-200 text-[10px] px-2.5 py-1 rounded-full border border-blue-400/20">
+          <p className="text-emerald-100 text-xs mt-1 font-medium">Kabupaten Klaten</p>
+          <div className="mt-3.5 inline-block bg-white/15 text-white text-[10px] px-2.5 py-1 rounded-full border border-white/25 backdrop-blur-xs font-semibold">
             Sistem Informasi Manajemen Terpadu
           </div>
         </div>
@@ -262,23 +262,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               </label>
             </div>
 
-            {/* Default credentials hint */}
-            <div className="p-3 bg-blue-50/80 border border-blue-100/80 rounded-xl text-[11px] text-blue-800 leading-relaxed space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-blue-900">
-                <Info size={14} className="text-blue-600 shrink-0" />
-                <span>Kredensial Login Default:</span>
-              </div>
-              <p className="text-slate-600 font-medium">
-                Username: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-bold text-blue-700">admin</code> | Password: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-bold text-blue-700">admin</code>
-              </p>
-              <button
-                type="button"
-                onClick={() => handlePresetFill('admin', 'admin')}
-                className="text-[10px] text-blue-600 hover:text-blue-800 font-bold underline cursor-pointer pt-0.5 block"
-              >
-                Gunakan Kredensial Admin Otomatis
-              </button>
-            </div>
+
 
             {/* Submit Button */}
             <button
