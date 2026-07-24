@@ -15,6 +15,8 @@ import {
   UserCheck,
   ClipboardList,
   Trash2,
+  Briefcase,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -58,14 +60,20 @@ export default function Sidebar({
     },
     {
       id: 'sekolah',
-      label: 'Daftar Sekolah',
+      label: 'Daftar & Profil Sekolah',
       icon: School,
-      allowedRoles: ['Super Admin', 'Admin', 'Cabang'],
+      allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
     },
     {
       id: 'guru',
       label: 'Data Guru',
       icon: Users2,
+      allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
+    },
+    {
+      id: 'tendik',
+      label: 'Tenaga Kependidikan',
+      icon: Briefcase,
       allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
     },
     {
@@ -81,8 +89,20 @@ export default function Sidebar({
       allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
     },
     {
+      id: 'mutasi',
+      label: 'Data Mutasi',
+      icon: ArrowRightLeft,
+      allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
+    },
+    {
       id: 'skGuru',
       label: 'SK Guru',
+      icon: FileText,
+      allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
+    },
+    {
+      id: 'skTendik',
+      label: 'SK Tendik',
       icon: FileText,
       allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
     },

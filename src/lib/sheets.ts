@@ -6,11 +6,34 @@ export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfyc
 export const SHEET_COLUMNS: Record<TableName, string[]> = {
   Users: ['id', 'email', 'name', 'role', 'password', 'cabangId', 'sekolahId', 'createdAt'],
   Cabang: ['id', 'name', 'code'],
-  Sekolah: ['id', 'name', 'npsn', 'cabangId', 'address', 'status', 'level'],
-  Guru: ['id', 'name', 'nip', 'schoolId', 'gender', 'subject', 'status'],
-  KepalaSekolah: ['id', 'name', 'nip', 'schoolId', 'startDate', 'endDate', 'status'],
-  Siswa: ['id', 'name', 'nisn', 'schoolId', 'class', 'gender'],
+  Sekolah: [
+    'id', 'name', 'npsn', 'cabangId', 'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota',
+    'status', 'level', 'phone', 'email', 'website', 'accreditation', 'accreditationExpiryDate', 'categoryCapability',
+    'hasNib', 'nib', 'skPendirianNumber', 'skPendirianDate', 'skIzinOperasional', 'skIzinOperasionalDate',
+    'jumlahSiswaPerKelas', 'jumlahKeseluruhanSiswa', 'jumlahGtp', 'jumlahGttp', 'jumlahKeseluruhanGuru',
+    'jumlahKtp', 'jumlahKttp', 'jumlahKeseluruhanKaryawan', 'jumlahGuruSertifikasi', 'jumlahGuruInpassing',
+    'jumlahDpkPns', 'sosmed', 'operatorName', 'operatorPhone', 'curriculum', 'vision', 'mission', 'description', 'logoUrl', 'bannerUrl'
+  ],
+  Guru: [
+    'id', 'name', 'nipm', 'gender', 'pobDob', 'schoolId', 'status', 'guruType', 'subject', 'hasPpg',
+    'nuptk', 'nrg', 'nip', 'nbm', 'skNumber', 'tmtAwal', 'education', 'educationProdi',
+    'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota', 'phone', 'persyarikatanActivity'
+  ],
+  TenagaKependidikan: [
+    'id', 'name', 'nipm', 'pobDob', 'gender', 'schoolId', 'status', 'position', 'nbm',
+    'skNumber', 'tmtAwal', 'education', 'educationProdi', 'address', 'rtRw', 'postalCode',
+    'kelurahan', 'kecamatan', 'kabupatenKota', 'phone', 'persyarikatanActivity'
+  ],
+  KepalaSekolah: [
+    'id', 'name', 'nipm', 'pobDob', 'phone', 'periodNumber', 'nip', 'schoolId', 'startDate',
+    'endDate', 'nuptk', 'nuks', 'serdikStatus', 'status'
+  ],
+  Siswa: [
+    'id', 'name', 'gender', 'nisn', 'pobDob', 'schoolId', 'class', 'address', 'rtRw',
+    'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota', 'status'
+  ],
   SKGuru: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'guruId', 'fileUrl', 'fileId', 'status'],
+  SKTenagaKependidikan: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'tendikId', 'fileUrl', 'fileId', 'status'],
   SKKepalaSekolah: ['id', 'skNumber', 'skDate', 'skEndDate', 'title', 'kepalaSekolahId', 'fileUrl', 'fileId', 'status'],
   Notifikasi: ['id', 'title', 'message', 'type', 'isRead', 'createdAt'],
   LogAktivitas: ['id', 'userEmail', 'action', 'details', 'timestamp'],

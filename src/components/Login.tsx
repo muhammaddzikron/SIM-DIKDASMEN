@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { googleSignIn } from '../lib/firebase';
-import { ShieldCheck, BookOpen, User, Lock, Eye, EyeOff, HelpCircle, AlertCircle, Info } from 'lucide-react';
+import { ShieldCheck, User, Lock, Eye, EyeOff, AlertCircle, Info } from 'lucide-react';
 import { Role } from '../types';
 
 interface LoginProps {
@@ -12,13 +11,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [showOfflineOption, setShowOfflineOption] = useState(false);
 
   // Pre-seed offline database if not present, so default users are immediately available
   useEffect(() => {
@@ -69,6 +65,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   const validateUser = (u: string, p: string) => {
+    const cleanU = u.trim().toLowerCase();
+    const cleanP = p.trim();
+
     // Check cached db
     try {
       const cached = localStorage.getItem('sim_offline_db');
@@ -77,15 +76,18 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         if (db && Array.isArray(db.users)) {
           const matched = db.users.find(
             (usr: any) =>
-              usr.email &&
-              (usr.email.toLowerCase() === u.toLowerCase() || usr.id === u) &&
-              usr.password === p
+              usr &&
+              ((usr.email && usr.email.toLowerCase() === cleanU) ||
+               (usr.name && usr.name.toLowerCase() === cleanU) ||
+               (usr.id && usr.id.toLowerCase() === cleanU) ||
+               (cleanU === 'admin' && (usr.role === 'Super Admin' || usr.email === 'admin@klaten.go.id'))) &&
+              (usr.password ? usr.password === cleanP : cleanP === 'admin')
           );
           if (matched) {
             return {
-              role: matched.role as Role,
-              name: matched.name,
-              email: matched.email,
+              role: (matched.role || 'Super Admin') as Role,
+              name: matched.name || 'Super Admin Klaten',
+              email: matched.email || 'admin@klaten.go.id',
               cabangId: matched.cabangId || '',
               sekolahId: matched.sekolahId || '',
             };
@@ -96,35 +98,31 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       console.error('Error reading offline db:', e);
     }
 
-    // Default hardcoded presets fallback
-    if (u === 'admin' && p === 'adminn') {
+    // Default hardcoded credentials fallback
+    if (cleanU === 'admin' && cleanP === 'admin') {
       return { role: 'Super Admin' as Role, name: 'Super Admin Klaten', email: 'admin@klaten.go.id', cabangId: '', sekolahId: '' };
     }
-    if (u === 'admin' && p === 'admin') {
-      return { role: 'Super Admin' as Role, name: 'Super Admin Klaten', email: 'admin@klaten.go.id', cabangId: '', sekolahId: '' };
-    }
-    if (u === 'admin2' && p === 'admin2') {
+    if (cleanU === 'admin2' && cleanP === 'admin2') {
       return { role: 'Admin' as Role, name: 'Admin Operator', email: 'admin2@klaten.go.id', cabangId: '', sekolahId: '' };
     }
 
     return null;
   };
 
-  const handleOfflineLogin = () => {
+  const handleLogin = (uInput: string, pInput: string) => {
     setError(null);
-    const u = username.trim();
-    const p = password;
+    const u = uInput.trim();
+    const p = pInput.trim();
 
-    let creds = null;
-    if (!u && !p) {
-      // Empty inputs: Quick default to Super Admin
-      creds = { role: 'Super Admin' as Role, name: 'Super Admin Klaten', email: 'admin@klaten.go.id', cabangId: '', sekolahId: '' };
-    } else {
-      creds = validateUser(u, p);
-      if (!creds) {
-        setError('Kredensial salah atau pengguna tidak ditemukan. Pastikan email dan password benar.');
-        return;
-      }
+    if (!u || !p) {
+      setError('Username dan Password wajib diisi.');
+      return;
+    }
+
+    const creds = validateUser(u, p);
+    if (!creds) {
+      setError('Username atau Password salah. Gunakan Username: admin & Password: admin');
+      return;
     }
 
     localStorage.setItem('sim_is_offline', 'true');
@@ -141,7 +139,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     } else {
       localStorage.removeItem('sim_override_sekolah_id');
     }
-    
+
     if (rememberMe && u) {
       localStorage.setItem('sim_remember_me', 'true');
       localStorage.setItem('sim_saved_username', u);
@@ -150,81 +148,20 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       localStorage.removeItem('sim_saved_username');
     }
 
-    const simulatedUser = {
-      uid: 'sim-usr-1',
+    const loggedInUser = {
+      uid: 'usr-' + Math.random().toString(36).substring(2, 9),
       email: creds.email,
       displayName: creds.name,
       photoURL: null,
       emailVerified: true,
     };
 
-    onLoginSuccess(simulatedUser, null);
+    onLoginSuccess(loggedInUser, null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setStatusMessage(null);
-    setShowOfflineOption(false);
-
-    const u = username.trim();
-    const p = password;
-
-    if (!u || !p) {
-      setError('Username dan Password wajib diisi.');
-      return;
-    }
-
-    const creds = validateUser(u, p);
-    if (!creds) {
-      setError('Kredensial salah atau pengguna tidak ditemukan. Pastikan email dan password benar.');
-      return;
-    }
-
-    setLoading(true);
-    setStatusMessage('Kredensial valid. Membuka sinkronisasi Google Sheets...');
-    
-    try {
-      // Trigger the Google Sign-In popup for spreadsheet/drive permissions
-      const result = await googleSignIn();
-      if (result) {
-        // Save role and profile overrides
-        localStorage.setItem('sim_override_role', creds.role);
-        localStorage.setItem('sim_override_username', creds.name);
-        localStorage.setItem('sim_override_email', creds.email);
-        if (creds.cabangId) {
-          localStorage.setItem('sim_override_cabang_id', creds.cabangId);
-        } else {
-          localStorage.removeItem('sim_override_cabang_id');
-        }
-        if (creds.sekolahId) {
-          localStorage.setItem('sim_override_sekolah_id', creds.sekolahId);
-        } else {
-          localStorage.removeItem('sim_override_sekolah_id');
-        }
-
-        // Manage Remember Me state
-        if (rememberMe) {
-          localStorage.setItem('sim_remember_me', 'true');
-          localStorage.setItem('sim_saved_username', u);
-        } else {
-          localStorage.removeItem('sim_remember_me');
-          localStorage.removeItem('sim_saved_username');
-        }
-
-        onLoginSuccess(result.user, result.accessToken);
-      } else {
-        setError('Otentikasi berhasil, tetapi gagal menghubungkan ke Google Sheets.');
-        setShowOfflineOption(true);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Otentikasi Google Sheets dibatalkan atau gagal.');
-      setShowOfflineOption(true);
-    } finally {
-      setLoading(false);
-      setStatusMessage(null);
-    }
+    handleLogin(username, password);
   };
 
   return (
@@ -263,13 +200,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <div className="p-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-xs flex items-start gap-2 leading-relaxed">
               <AlertCircle size={15} className="shrink-0 mt-0.5" />
               <span>{error}</span>
-            </div>
-          )}
-
-          {statusMessage && (
-            <div className="p-3 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-xs flex items-center gap-2 font-medium">
-              <div className="h-3 w-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin shrink-0"></div>
-              <span>{statusMessage}</span>
             </div>
           )}
 
@@ -332,6 +262,24 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               </label>
             </div>
 
+            {/* Default credentials hint */}
+            <div className="p-3 bg-blue-50/80 border border-blue-100/80 rounded-xl text-[11px] text-blue-800 leading-relaxed space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                <Info size={14} className="text-blue-600 shrink-0" />
+                <span>Kredensial Login Default:</span>
+              </div>
+              <p className="text-slate-600 font-medium">
+                Username: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-bold text-blue-700">admin</code> | Password: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-bold text-blue-700">admin</code>
+              </p>
+              <button
+                type="button"
+                onClick={() => handlePresetFill('admin', 'admin')}
+                className="text-[10px] text-blue-600 hover:text-blue-800 font-bold underline cursor-pointer pt-0.5 block"
+              >
+                Gunakan Kredensial Admin Otomatis
+              </button>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -346,40 +294,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               ) : (
                 'Masuk Sekarang'
               )}
-            </button>
-
-            {/* Simulated Bypass option if there is an authentication network error */}
-            {showOfflineOption && (
-              <div className="p-3.5 bg-amber-50 border border-amber-100 rounded-xl text-[11px] space-y-2 text-amber-800 leading-relaxed mt-2 animate-fadeIn">
-                <div className="flex gap-1.5 font-bold">
-                  <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-600" />
-                  <span>Koneksi Google Sheets Gagal/Terbatas</span>
-                </div>
-                <p className="text-slate-600">
-                  Otentikasi Google Sheets terhalang kebijakan sandbox browser atau pembatasan jaringan. Anda dapat tetap melanjutkan ke semua fitur manajemen menggunakan <strong>Mode Simulasi (Offline)</strong> dengan menyimpan data di browser Anda.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleOfflineLogin}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer"
-                >
-                  Masuk dalam Mode Simulasi Offline
-                </button>
-              </div>
-            )}
-
-            <div className="relative flex py-1 items-center font-sans">
-              <div className="flex-grow border-t border-slate-100"></div>
-              <span className="flex-shrink mx-3 text-[9px] text-slate-400 font-bold uppercase tracking-wider">Atau</span>
-              <div className="flex-grow border-t border-slate-100"></div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleOfflineLogin}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg transition-colors cursor-pointer text-xs flex items-center justify-center gap-1.5"
-            >
-              Masuk Offline (Mode Simulasi)
             </button>
 
             {/* Forgot Password link under submit button */}

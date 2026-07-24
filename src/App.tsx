@@ -16,6 +16,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import CrudView from './components/CrudView';
 import RecycleBinView from './components/RecycleBinView';
+import MutasiView from './components/MutasiView';
 import { ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, Database, FolderGit, Globe } from 'lucide-react';
 
 const TAB_TO_TABLE_MAP: Record<string, TableName> = {
@@ -23,9 +24,11 @@ const TAB_TO_TABLE_MAP: Record<string, TableName> = {
   cabang: 'Cabang',
   sekolah: 'Sekolah',
   guru: 'Guru',
+  tendik: 'TenagaKependidikan',
   kepalaSekolah: 'KepalaSekolah',
   siswa: 'Siswa',
   skGuru: 'SKGuru',
+  skTendik: 'SKTenagaKependidikan',
   skKepalaSekolah: 'SKKepalaSekolah',
   notifikasi: 'Notifikasi',
   logAktivitas: 'LogAktivitas',
@@ -66,9 +69,11 @@ export default function App() {
     cabang: [],
     sekolah: [],
     guru: [],
+    tendik: [],
     kepalaSekolah: [],
     siswa: [],
     skGuru: [],
+    skTendik: [],
     skKepalaSekolah: [],
     notifikasi: [],
     logAktivitas: [],
@@ -92,9 +97,11 @@ export default function App() {
         cabang,
         sekolah,
         guru,
+        tendik,
         kepalaSekolah,
         siswa,
         skGuru,
+        skTendik,
         skKepalaSekolah,
         notifikasi,
         logAktivitas,
@@ -104,9 +111,11 @@ export default function App() {
         readTable<any>(token, currentSpreadsheetId, 'Cabang'),
         readTable<any>(token, currentSpreadsheetId, 'Sekolah'),
         readTable<any>(token, currentSpreadsheetId, 'Guru'),
+        readTable<any>(token, currentSpreadsheetId, 'TenagaKependidikan'),
         readTable<any>(token, currentSpreadsheetId, 'KepalaSekolah'),
         readTable<any>(token, currentSpreadsheetId, 'Siswa'),
         readTable<any>(token, currentSpreadsheetId, 'SKGuru'),
+        readTable<any>(token, currentSpreadsheetId, 'SKTenagaKependidikan'),
         readTable<any>(token, currentSpreadsheetId, 'SKKepalaSekolah'),
         readTable<any>(token, currentSpreadsheetId, 'Notifikasi'),
         readTable<any>(token, currentSpreadsheetId, 'LogAktivitas'),
@@ -118,9 +127,11 @@ export default function App() {
         cabang,
         sekolah,
         guru,
+        tendik,
         kepalaSekolah,
         siswa,
         skGuru,
+        skTendik,
         skKepalaSekolah,
         notifikasi,
         logAktivitas,
@@ -134,12 +145,52 @@ export default function App() {
           { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V' },
         ];
         const starterSekolah = [
-          { id: 'sch-1', name: 'SMAN 1 Klaten', npsn: '20309501', cabangId: 'cab-1', address: 'Jl. Merbabu No.13, Klaten', status: 'Negeri', level: 'SMA' },
-          { id: 'sch-2', name: 'SMKN 1 Klaten', npsn: '20309502', cabangId: 'cab-1', address: 'Jl. Pemuda No.120, Klaten', status: 'Negeri', level: 'SMK' },
+          {
+            id: 'sch-1',
+            name: 'SMAN 1 Klaten',
+            npsn: '20309501',
+            cabangId: 'cab-1',
+            address: 'Jl. Merbabu No.13, Klaten Jawa Tengah',
+            status: 'Negeri',
+            level: 'SMA',
+            phone: '(0272) 321520',
+            email: 'sman1klaten@sch.id',
+            website: 'https://sman1klaten.sch.id',
+            accreditation: 'A',
+            curriculum: 'Kurikulum Merdeka',
+            vision: 'Terwujudnya Lulusan yang Bertaqwa, Cerdas, Berkarakter Pancasila, Unggul dalam Prestasi dan Berwawasan Global.',
+            mission: '1. Menyelenggarakan pembelajaran berkualitas berbasis teknologi.\n2. Mengembangkan bakat, minat, dan potensi siswa secara optimal.\n3. Membiasakan budaya tertib, disiplin, dan berakhlak mulia.',
+            description: 'Selamat datang di Portal Resmi SMAN 1 Klaten. Kami berkomitmen untuk memberikan pendidikan menengah atas terbaik yang berfokus pada pembentukan karakter, prestasi akademik, dan kesiapan siswa.',
+            logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10',
+            bannerUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&auto=format&fit=crop&q=80'
+          },
+          {
+            id: 'sch-2',
+            name: 'SMKN 1 Klaten',
+            npsn: '20309502',
+            cabangId: 'cab-1',
+            address: 'Jl. Pemuda No.120, Klaten Jawa Tengah',
+            status: 'Negeri',
+            level: 'SMK',
+            phone: '(0272) 321456',
+            email: 'info@smkn1klaten.sch.id',
+            website: 'https://smkn1klaten.sch.id',
+            accreditation: 'A',
+            curriculum: 'Kurikulum Merdeka',
+            vision: 'Menjadi Sekolah Menengah Kejuruan Unggul, Menghasilkan Lulusan Kompeten, Berkarakter, dan Siap Kerja.',
+            mission: '1. Membekali siswa dengan keterampilan vokasi sesuai kebutuhan industri.\n2. Menjalin kerja sama luas dengan DUDI.\n3. Menanamkan jiwa kewirausahaan (entrepreneurship).',
+            description: 'SMKN 1 Klaten merupakan pusat keunggulan pendidikan kejuruan di Kabupaten Klaten yang melahirkan tenaga kerja terampil dan siap bersaing.',
+            logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10',
+            bannerUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&auto=format&fit=crop&q=80'
+          },
         ];
         const starterGuru = [
           { id: 'gur-1', name: 'Eko Sulistyo, S.Pd., M.Si.', nip: '198205122009031005', schoolId: 'sch-1', gender: 'Laki-laki', subject: 'Matematika', status: 'PNS' },
           { id: 'gur-2', name: 'Rina Rahmawati, S.Pd.', nip: '199002142018022001', schoolId: 'sch-2', gender: 'Perempuan', subject: 'Bahasa Inggris', status: 'PPPK' },
+        ];
+        const starterTendik = [
+          { id: 'tnd-1', name: 'Bambang Prasetyo, S.Kom.', nip: '198504102010011008', schoolId: 'sch-1', gender: 'Laki-laki', position: 'Kepala Tata Usaha', status: 'PNS' },
+          { id: 'tnd-2', name: 'Dewi Lestari, A.Md.', nip: '199208152020012015', schoolId: 'sch-2', gender: 'Perempuan', position: 'Pustakawan', status: 'PPPK' },
         ];
         const starterKepalaSekolah = [
           { id: 'ks-1', name: 'Suharno, S.Pd., M.Pd.', nip: '197003151996021002', schoolId: 'sch-1', startDate: '2022-08-01', endDate: '2026-08-01', status: 'Aktif' },
@@ -152,6 +203,9 @@ export default function App() {
         const starterSKGuru = [
           { id: 'skg-1', skNumber: '800/215/SK/2026', skDate: '2026-06-01', skEndDate: '2030-06-01', title: 'SK Guru Tetap Matematika SMAN 1 Klaten', guruId: 'gur-1', fileUrl: 'https://drive.google.com/file/d/1_abc_xyz/view', fileId: '1_abc_xyz', status: 'Terbit' },
           { id: 'skg-2', skNumber: '', skDate: '2026-08-01', skEndDate: '2030-08-01', title: 'Rencana SK Penugasan Rina Rahmawati', guruId: 'gur-2', fileUrl: '', fileId: '', status: 'Belum Terbit' },
+        ];
+        const starterSKTendik = [
+          { id: 'skt-1', skNumber: '800/310/SK-TU/2026', skDate: '2026-06-01', skEndDate: '2030-06-01', title: 'SK Pengangkatan Kepala Tata Usaha SMAN 1 Klaten', tendikId: 'tnd-1', fileUrl: 'https://drive.google.com/file/d/3_abc_xyz/view', fileId: '3_abc_xyz', status: 'Terbit' },
         ];
         const starterSKKepalaSekolah = [
           { id: 'skks-1', skNumber: '821/103/SK-KS/2022', skDate: '2022-08-01', skEndDate: '2026-08-01', title: 'SK Pengangkatan Suharno SMAN 1 Klaten', kepalaSekolahId: 'ks-1', fileUrl: 'https://drive.google.com/file/d/2_abc_xyz/view', fileId: '2_abc_xyz', status: 'Terbit' },
@@ -173,9 +227,11 @@ export default function App() {
           ...starterCabang.map((c) => insertRecord(token, currentSpreadsheetId, 'Cabang', c)),
           ...starterSekolah.map((s) => insertRecord(token, currentSpreadsheetId, 'Sekolah', s)),
           ...starterGuru.map((g) => insertRecord(token, currentSpreadsheetId, 'Guru', g)),
+          ...starterTendik.map((t) => insertRecord(token, currentSpreadsheetId, 'TenagaKependidikan', t)),
           ...starterKepalaSekolah.map((ks) => insertRecord(token, currentSpreadsheetId, 'KepalaSekolah', ks)),
           ...starterSiswa.map((sis) => insertRecord(token, currentSpreadsheetId, 'Siswa', sis)),
           ...starterSKGuru.map((sk) => insertRecord(token, currentSpreadsheetId, 'SKGuru', sk)),
+          ...starterSKTendik.map((sk) => insertRecord(token, currentSpreadsheetId, 'SKTenagaKependidikan', sk)),
           ...starterSKKepalaSekolah.map((sk) => insertRecord(token, currentSpreadsheetId, 'SKKepalaSekolah', sk)),
           ...starterNotifikasi.map((not) => insertRecord(token, currentSpreadsheetId, 'Notifikasi', not)),
         ]);
@@ -256,12 +312,52 @@ export default function App() {
           { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V' },
         ];
         const starterSekolah = [
-          { id: 'sch-1', name: 'SMAN 1 Klaten', npsn: '20309501', cabangId: 'cab-1', address: 'Jl. Merbabu No.13, Klaten', status: 'Negeri', level: 'SMA' },
-          { id: 'sch-2', name: 'SMKN 1 Klaten', npsn: '20309502', cabangId: 'cab-1', address: 'Jl. Pemuda No.120, Klaten', status: 'Negeri', level: 'SMK' },
+          {
+            id: 'sch-1',
+            name: 'SMAN 1 Klaten',
+            npsn: '20309501',
+            cabangId: 'cab-1',
+            address: 'Jl. Merbabu No.13, Klaten Jawa Tengah',
+            status: 'Negeri',
+            level: 'SMA',
+            phone: '(0272) 321520',
+            email: 'sman1klaten@sch.id',
+            website: 'https://sman1klaten.sch.id',
+            accreditation: 'A',
+            curriculum: 'Kurikulum Merdeka',
+            vision: 'Terwujudnya Lulusan yang Bertaqwa, Cerdas, Berkarakter Pancasila, Unggul dalam Prestasi dan Berwawasan Global.',
+            mission: '1. Menyelenggarakan pembelajaran berkualitas berbasis teknologi.\n2. Mengembangkan bakat, minat, dan potensi siswa secara optimal.\n3. Membiasakan budaya tertib, disiplin, dan berakhlak mulia.',
+            description: 'Selamat datang di Portal Resmi SMAN 1 Klaten. Kami berkomitmen untuk memberikan pendidikan menengah atas terbaik yang berfokus pada pembentukan karakter, prestasi akademik, dan kesiapan siswa.',
+            logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10',
+            bannerUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&auto=format&fit=crop&q=80'
+          },
+          {
+            id: 'sch-2',
+            name: 'SMKN 1 Klaten',
+            npsn: '20309502',
+            cabangId: 'cab-1',
+            address: 'Jl. Pemuda No.120, Klaten Jawa Tengah',
+            status: 'Negeri',
+            level: 'SMK',
+            phone: '(0272) 321456',
+            email: 'info@smkn1klaten.sch.id',
+            website: 'https://smkn1klaten.sch.id',
+            accreditation: 'A',
+            curriculum: 'Kurikulum Merdeka',
+            vision: 'Menjadi Sekolah Menengah Kejuruan Unggul, Menghasilkan Lulusan Kompeten, Berkarakter, dan Siap Kerja.',
+            mission: '1. Membekali siswa dengan keterampilan vokasi sesuai kebutuhan industri.\n2. Menjalin kerja sama luas dengan DUDI.\n3. Menanamkan jiwa kewirausahaan (entrepreneurship).',
+            description: 'SMKN 1 Klaten merupakan pusat keunggulan pendidikan kejuruan di Kabupaten Klaten yang melahirkan tenaga kerja terampil dan siap bersaing.',
+            logoUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRP5MZnPQfHQJ-iyzCfpVwYvy015zX_XJyvJUAAoMWLpf15sJSkm0lqh4M&s=10',
+            bannerUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&auto=format&fit=crop&q=80'
+          },
         ];
         const starterGuru = [
           { id: 'gur-1', name: 'Eko Sulistyo, S.Pd., M.Si.', nip: '198205122009031005', schoolId: 'sch-1', gender: 'Laki-laki', subject: 'Matematika', status: 'PNS' },
           { id: 'gur-2', name: 'Rina Rahmawati, S.Pd.', nip: '199002142018022001', schoolId: 'sch-2', gender: 'Perempuan', subject: 'Bahasa Inggris', status: 'PPPK' },
+        ];
+        const starterTendik = [
+          { id: 'tnd-1', name: 'Bambang Prasetyo, S.Kom.', nip: '198504102010011008', schoolId: 'sch-1', gender: 'Laki-laki', position: 'Kepala Tata Usaha', status: 'PNS' },
+          { id: 'tnd-2', name: 'Dewi Lestari, A.Md.', nip: '199208152020012015', schoolId: 'sch-2', gender: 'Perempuan', position: 'Pustakawan', status: 'PPPK' },
         ];
         const starterKepalaSekolah = [
           { id: 'ks-1', name: 'Suharno, S.Pd., M.Pd.', nip: '197003151996021002', schoolId: 'sch-1', startDate: '2022-08-01', endDate: '2026-08-01', status: 'Aktif' },
@@ -274,6 +370,9 @@ export default function App() {
         const starterSKGuru = [
           { id: 'skg-1', skNumber: '800/215/SK/2026', skDate: '2026-06-01', skEndDate: '2030-06-01', title: 'SK Guru Tetap Matematika SMAN 1 Klaten', guruId: 'gur-1', fileUrl: 'https://drive.google.com/file/d/1_abc_xyz/view', fileId: '1_abc_xyz', status: 'Terbit' },
           { id: 'skg-2', skNumber: '', skDate: '2026-08-01', skEndDate: '2030-08-01', title: 'Rencana SK Penugasan Rina Rahmawati', guruId: 'gur-2', fileUrl: '', fileId: '', status: 'Belum Terbit' },
+        ];
+        const starterSKTendik = [
+          { id: 'skt-1', skNumber: '800/310/SK-TU/2026', skDate: '2026-06-01', skEndDate: '2030-06-01', title: 'SK Pengangkatan Kepala Tata Usaha SMAN 1 Klaten', tendikId: 'tnd-1', fileUrl: 'https://drive.google.com/file/d/3_abc_xyz/view', fileId: '3_abc_xyz', status: 'Terbit' },
         ];
         const starterSKKepalaSekolah = [
           { id: 'skks-1', skNumber: '821/103/SK-KS/2022', skDate: '2022-08-01', skEndDate: '2026-08-01', title: 'SK Pengangkatan Suharno SMAN 1 Klaten', kepalaSekolahId: 'ks-1', fileUrl: 'https://drive.google.com/file/d/2_abc_xyz/view', fileId: '2_abc_xyz', status: 'Terbit' },
@@ -294,9 +393,11 @@ export default function App() {
           cabang: starterCabang as any,
           sekolah: starterSekolah as any,
           guru: starterGuru as any,
+          tendik: starterTendik as any,
           kepalaSekolah: starterKepalaSekolah as any,
           siswa: starterSiswa as any,
           skGuru: starterSKGuru as any,
+          skTendik: starterSKTendik as any,
           skKepalaSekolah: starterSKKepalaSekolah as any,
           notifikasi: starterNotifikasi as any,
           logAktivitas: [],
@@ -822,7 +923,13 @@ export default function App() {
 
         {/* Multi-Tab Routing Content rendering */}
         {currentTab === 'dashboard' ? (
-          <Dashboard data={data} onNavigateToTab={setCurrentTab} />
+          <Dashboard
+            data={data}
+            onNavigateToTab={setCurrentTab}
+            userRole={activeRole}
+            userSekolahId={userProfile?.sekolahId}
+            userCabangId={userProfile?.cabangId}
+          />
         ) : currentTab === 'settings' ? (
           <div className="max-w-xl bg-white border border-slate-200/80 rounded-xl shadow-sm p-6 space-y-6 animate-fadeIn">
             <div>
@@ -916,6 +1023,34 @@ export default function App() {
             onRestore={handleRestoreRecycleItem}
             onDeletePermanently={handleDeletePermanently}
             onClearBin={handleClearBin}
+            isDarkMode={false}
+          />
+        ) : currentTab === 'mutasi' ? (
+          <MutasiView
+            data={data}
+            userRole={activeRole}
+            userCabangId={userProfile?.cabangId}
+            userSekolahId={userProfile?.sekolahId}
+            onEditRecord={async (tableName, id, updatedFields) => {
+              // Map TAB name or TableName
+              const targetTable = TAB_TO_TABLE_MAP[tableName] || (tableName as TableName);
+              // Set currentTab momentarily for handleEditRecord if needed, or call update logic directly
+              const currentTable = TAB_TO_TABLE_MAP[currentTab] || (currentTab as TableName);
+              // Handle update
+              const activeSpreadsheetId = spreadsheetId || DEFAULT_SPREADSHEET_ID;
+              await updateRecord(accessToken || '', activeSpreadsheetId, targetTable, id, updatedFields);
+              const reloadedData = await syncData(accessToken || '', activeSpreadsheetId);
+              setData(reloadedData);
+              localStorage.setItem('sim_offline_db', JSON.stringify(reloadedData));
+            }}
+            onDeleteRecord={async (tableName, id) => {
+              const targetTable = TAB_TO_TABLE_MAP[tableName] || (tableName as TableName);
+              const activeSpreadsheetId = spreadsheetId || DEFAULT_SPREADSHEET_ID;
+              await deleteRecord(accessToken || '', activeSpreadsheetId, targetTable, id);
+              const reloadedData = await syncData(accessToken || '', activeSpreadsheetId);
+              setData(reloadedData);
+              localStorage.setItem('sim_offline_db', JSON.stringify(reloadedData));
+            }}
             isDarkMode={false}
           />
         ) : (
