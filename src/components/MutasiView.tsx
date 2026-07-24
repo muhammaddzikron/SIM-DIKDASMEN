@@ -348,13 +348,13 @@ export default function MutasiView({
               <th className="p-3">Asal Sekolah</th>
               <th className="p-3">Keterangan / Jabatan</th>
               <th className="p-3">Status</th>
-              <th className="p-3 text-right">Aksi & Pemulihan</th>
+              {userRole !== 'Cabang' && <th className="p-3 text-right">Aksi & Pemulihan</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredList.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center p-8 text-slate-400 text-xs font-medium">
+                <td colSpan={userRole === 'Cabang' ? 6 : 7} className="text-center p-8 text-slate-400 text-xs font-medium">
                   {searchQuery || selectedSchoolId || activeCategory !== 'Semua'
                     ? 'Tidak ada data mutasi yang cocok dengan filter.'
                     : 'Belum ada data pegawai atau siswa yang berstatus Mutasi.'}
@@ -377,28 +377,30 @@ export default function MutasiView({
                       Mutasi
                     </span>
                   </td>
-                  <td className="p-3 text-right space-x-2">
-                    <button
-                      onClick={() => handleRestore(item)}
-                      disabled={restoringId === item.id}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
-                      title="Pulihkan status pegawai/siswa ini menjadi Aktif"
-                    >
-                      <RefreshCw size={12} className={restoringId === item.id ? 'animate-spin' : ''} />
-                      Pulihkan Status
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Apakah Anda yakin ingin menghapus permanen data mutasi ${item.name}?`)) {
-                          onDeleteRecord(item.tableName, item.id);
-                        }
-                      }}
-                      className="px-2 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-600 rounded-md text-[11px] font-semibold transition-colors cursor-pointer"
-                      title="Hapus data"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
+                  {userRole !== 'Cabang' && (
+                    <td className="p-3 text-right space-x-2">
+                      <button
+                        onClick={() => handleRestore(item)}
+                        disabled={restoringId === item.id}
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Pulihkan status pegawai/siswa ini menjadi Aktif"
+                      >
+                        <RefreshCw size={12} className={restoringId === item.id ? 'animate-spin' : ''} />
+                        Pulihkan Status
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Apakah Anda yakin ingin menghapus permanen data mutasi ${item.name}?`)) {
+                            onDeleteRecord(item.tableName, item.id);
+                          }
+                        }}
+                        className="px-2 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-600 rounded-md text-[11px] font-semibold transition-colors cursor-pointer"
+                        title="Hapus data"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

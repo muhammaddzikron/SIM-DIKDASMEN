@@ -959,6 +959,10 @@ export default function CrudView({
   // 9. Save Form (Submit)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (userRole === 'Cabang') {
+      setFormError('Akses Cabang terbatas untuk melihat dan mengekspor data saja.');
+      return;
+    }
     setFormLoading(true);
     setFormError(null);
 
@@ -1611,8 +1615,8 @@ export default function CrudView({
             <FileSpreadsheet size={13} /> Ekspor Excel
           </button>
 
-          {/* Import from Excel/CSV (Only for Guru, TenagaKependidikan, Siswa, Sekolah) */}
-          {['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && (
+          {/* Import from Excel/CSV (Disabled for Cabang) */}
+          {userRole !== 'Cabang' && ['Guru', 'TenagaKependidikan', 'Siswa', 'Sekolah'].includes(tableName) && (
             <button
               onClick={() => {
                 setImportError(null);
@@ -1631,8 +1635,8 @@ export default function CrudView({
             </button>
           )}
 
-          {/* Read-only check for Activity Logs & Notifications */}
-          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && (
+          {/* Read-only check for Activity Logs, Notifications & Cabang Role */}
+          {tableName !== 'LogAktivitas' && tableName !== 'Notifikasi' && userRole !== 'Cabang' && (
             <button
               onClick={handleOpenAdd}
               className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-emerald-400/20 active:scale-[0.98]"
@@ -1642,6 +1646,13 @@ export default function CrudView({
           )}
         </div>
       </div>
+
+      {userRole === 'Cabang' && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold">
+          <ShieldCheck size={16} className="text-amber-600 shrink-0" />
+          <span>Mode Pimpinan Cabang: Hak akses hanya untuk melihat dan mengekspor data (Fitur Edit & Impor dinonaktifkan).</span>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden">
@@ -1715,7 +1726,7 @@ export default function CrudView({
         </div>
 
         {/* Bulk Action Button (Show if items are checked) */}
-        {selectedIds.length > 0 && onBulkDelete && (
+        {selectedIds.length > 0 && onBulkDelete && userRole !== 'Cabang' && (
           <button
             onClick={handleBulkDeleteClick}
             className="bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 border border-rose-500/30 text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs animate-fadeIn"
@@ -1746,8 +1757,8 @@ export default function CrudView({
             <tr className={`border-b font-semibold ${
               isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-[#F8FAFC] border-slate-100 text-slate-600'
             }`}>
-              {/* Checkbox column header (Disabled for Logs) */}
-              {tableName !== 'LogAktivitas' ? (
+              {/* Checkbox column header (Disabled for Logs & Cabang Role) */}
+              {tableName !== 'LogAktivitas' && userRole !== 'Cabang' ? (
                 <th className="py-2.5 px-3 w-10 text-center">
                   <input
                     type="checkbox"
@@ -1765,7 +1776,7 @@ export default function CrudView({
                   {tableHeaders[key as keyof typeof tableHeaders]}
                 </th>
               ))}
-              {tableName !== 'LogAktivitas' && (
+              {tableName !== 'LogAktivitas' && userRole !== 'Cabang' && (
                 <th className="py-2.5 px-3 text-center w-24 text-[10px] font-bold uppercase tracking-wider">Aksi</th>
               )}
             </tr>
@@ -1773,7 +1784,7 @@ export default function CrudView({
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
             {paginatedList.length === 0 ? (
               <tr>
-                <td colSpan={Object.keys(tableHeaders).length + 2} className="p-12 text-center text-slate-400">
+                <td colSpan={Object.keys(tableHeaders).length + (userRole === 'Cabang' ? 1 : 2)} className="p-12 text-center text-slate-400">
                   <AlertCircle className="h-6 w-6 mx-auto text-slate-300 mb-2" />
                   Belum ada data tersedia.
                 </td>
@@ -1796,7 +1807,7 @@ export default function CrudView({
                     }`}
                   >
                     {/* Checkbox column cell */}
-                    {tableName !== 'LogAktivitas' ? (
+                    {tableName !== 'LogAktivitas' && userRole !== 'Cabang' ? (
                       <td className="py-2 px-3 text-center">
                         <input
                           type="checkbox"
@@ -1815,7 +1826,7 @@ export default function CrudView({
                       </td>
                     ))}
 
-                    {tableName !== 'LogAktivitas' && (
+                    {tableName !== 'LogAktivitas' && userRole !== 'Cabang' && (
                       <td className="py-2 px-3 text-center flex items-center justify-center gap-1.5 print:hidden">
                         {(userRole === 'Admin' || userRole === 'Super Admin') &&
                           ['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) &&
