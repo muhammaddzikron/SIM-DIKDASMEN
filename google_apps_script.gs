@@ -14,16 +14,18 @@
  * - onEditTrigger: Otomatis memantau perubahan status SK dan mengirimkan email pemberitahuan ke sekolah penerima.
  */
 
-// Definisi Struktur Kolom Database SIM DIKDASMEN
+// Definisi Struktur Kolom Database SIM DIKDASMEN (Versi Terbaru)
 var SHEET_COLUMNS = {
   "Users": ["id", "email", "name", "role", "password", "cabangId", "sekolahId", "createdAt"],
   "Cabang": ["id", "name", "code"],
   "Sekolah": ["id", "name", "npsn", "cabangId", "address", "status", "level"],
-  "Guru": ["id", "name", "nip", "schoolId", "gender", "subject", "status"],
-  "KepalaSekolah": ["id", "name", "nip", "schoolId", "startDate", "endDate", "status"],
-  "Siswa": ["id", "name", "nisn", "schoolId", "class", "gender"],
-  "SKGuru": ["id", "skNumber", "skDate", "skEndDate", "title", "guruId", "fileUrl", "fileId", "status"],
-  "SKKepalaSekolah": ["id", "skNumber", "skDate", "skEndDate", "title", "kepalaSekolahId", "fileUrl", "fileId", "status"],
+  "Guru": ["id", "name", "nipm", "pobDob", "gender", "schoolId", "status", "position", "nbm", "skNumber", "tmtAwal", "education", "educationProdi", "address", "rtRw", "postalCode", "kelurahan", "kecamatan", "kabupatenKota", "phone", "persyarikatanActivity"],
+  "TenagaKependidikan": ["id", "name", "nipm", "nip", "pobDob", "gender", "schoolId", "status", "position", "nbm", "skNumber", "tmtAwal", "education", "educationProdi", "address", "rtRw", "postalCode", "kelurahan", "kecamatan", "kabupatenKota", "phone", "persyarikatanActivity"],
+  "KepalaSekolah": ["id", "name", "nipm", "pobDob", "gender", "schoolId", "status", "position", "nbm", "skNumber", "tmtAwal", "education", "educationProdi", "address", "rtRw", "postalCode", "kelurahan", "kecamatan", "kabupatenKota", "phone", "persyarikatanActivity"],
+  "Siswa": ["id", "name", "gender", "nisn", "pobDob", "schoolId", "class", "address", "rtRw", "postalCode", "kelurahan", "kecamatan", "kabupatenKota", "status"],
+  "SKGuru": ["id", "skNumber", "skDate", "skEndDate", "title", "guruId", "fileUrl", "fileId", "status", "submissionType", "nbmUrl", "ijazahUrl", "skLamaUrl"],
+  "SKTenagaKependidikan": ["id", "skNumber", "skDate", "skEndDate", "title", "tendikId", "fileUrl", "fileId", "status", "submissionType", "nbmUrl", "ijazahUrl", "skLamaUrl"],
+  "SKKepalaSekolah": ["id", "skNumber", "skDate", "skEndDate", "title", "kepalaSekolahId", "fileUrl", "fileId", "status", "submissionType", "nbmUrl", "ijazahUrl", "skLamaUrl"],
   "Notifikasi": ["id", "title", "message", "type", "isRead", "createdAt"],
   "LogAktivitas": ["id", "userEmail", "action", "details", "timestamp"],
   "Setting": ["key", "value"]
@@ -246,8 +248,8 @@ function onEdit(e) {
   var sheet = range.getSheet();
   var sheetName = sheet.getName();
   
-  // Deteksi edit di sheet SKGuru atau SKKepalaSekolah
-  if (sheetName === "SKGuru" || sheetName === "SKKepalaSekolah") {
+  // Deteksi edit di sheet SKGuru, SKTenagaKependidikan, atau SKKepalaSekolah
+  if (sheetName === "SKGuru" || sheetName === "SKTenagaKependidikan" || sheetName === "SKKepalaSekolah") {
     var row = range.getRow();
     var col = range.getColumn();
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
