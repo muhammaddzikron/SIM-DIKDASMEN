@@ -77,6 +77,7 @@ export interface Guru {
   gender: 'Laki-laki' | 'Perempuan';
   pobDob?: string; // Tempat Tanggal Lahir
   schoolId: string;
+  sekolah?: string;
   status: 'GTP' | 'GTTP' | 'PNS' | 'GTT' | 'Honor' | 'Mutasi' | string;
   guruType?: 'Guru Kelas' | 'Guru Mata Pelajaran' | string;
   subject: string; // Detail Kelas / Mata Pelajaran
@@ -107,6 +108,7 @@ export interface TenagaKependidikan {
   pobDob?: string; // Tempat Tanggal Lahir
   gender: 'Laki-laki' | 'Perempuan';
   schoolId: string;
+  sekolah?: string;
   status: 'KTP' | 'KTTP' | 'PNS' | 'GTT' | 'Honor' | 'PTT' | 'Mutasi' | string;
   position: string; // Jenis Karyawan (TU, Operator, Perpus, Penjaga, OB, Keamanan, Tukang Kebun, Lainnya)
   nbm?: string;
@@ -148,6 +150,7 @@ export interface Siswa {
   nisn: string;
   pobDob?: string; // Tempat Tanggal Lahir
   schoolId: string;
+  sekolah?: string;
   class: string;
   address?: string;
   rtRw?: string;

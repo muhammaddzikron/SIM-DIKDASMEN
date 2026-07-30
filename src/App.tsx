@@ -3,12 +3,15 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { initAuth, logout } from './lib/firebase';
 import {
   DEFAULT_SPREADSHEET_ID,
+  DEFAULT_APPS_SCRIPT_URL,
   initializeDatabase,
   readTable,
+  readAllTables,
   insertRecord,
   updateRecord,
   deleteRecord,
 } from './lib/sheets';
+import { APPS_SCRIPT_CODE } from './lib/appsScriptCode';
 import { DEFAULT_DRIVE_FOLDER_ID } from './lib/drive';
 import { DatabaseState, TableName, User, Role } from './types';
 import Login from './components/Login';
@@ -17,7 +20,23 @@ import Dashboard from './components/Dashboard';
 import CrudView from './components/CrudView';
 import RecycleBinView from './components/RecycleBinView';
 import MutasiView from './components/MutasiView';
-import { ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, Database, FolderGit, Globe, SlidersHorizontal, UserCheck } from 'lucide-react';
+import {
+  ShieldAlert,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Database,
+  FolderGit,
+  Globe,
+  SlidersHorizontal,
+  UserCheck,
+  Code,
+  Copy,
+  Check,
+  ExternalLink,
+  X,
+  Zap,
+} from 'lucide-react';
 
 const TAB_TO_TABLE_MAP: Record<string, TableName> = {
   users: 'Users',
@@ -50,7 +69,7 @@ export default function App() {
     return localStorage.getItem('sim_drive_folder_id') || DEFAULT_DRIVE_FOLDER_ID;
   });
   const [appsScriptUrl, setAppsScriptUrl] = useState(() => {
-    return localStorage.getItem('sim_apps_script_url') || 'https://script.google.com/macros/s/AKfycbzBp2XDUp2Tj325ijjDFNPdDFGZ8eM1X6CgNhlOMvFSoXv5XtcfDFlKkEaDAMkzQ4nE/exec';
+    return localStorage.getItem('sim_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
   });
 
   // Recycle Bin State loaded from local storage
@@ -83,6 +102,11 @@ export default function App() {
   // User Profile configuration state (Role & Tenant scoping)
   const [userProfile, setUserProfile] = useState<User | null>(null);
 
+  // Apps Script modal and connection test states
+  const [showScriptModal, setShowScriptModal] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
   // Synchronize All Tables from Google Sheets
   const syncData = useCallback(async (token: string, currentSpreadsheetId: string) => {
     setLoading(true);
@@ -91,52 +115,57 @@ export default function App() {
       // 1. Initialize sheets if any are missing
       await initializeDatabase(token, currentSpreadsheetId);
 
-      // 2. Read all tables in parallel for max performance
-      const [
-        users,
-        cabang,
-        sekolah,
-        guru,
-        tendik,
-        kepalaSekolah,
-        siswa,
-        skGuru,
-        skTendik,
-        skKepalaSekolah,
-        notifikasi,
-        logAktivitas,
-        settings,
-      ] = await Promise.all([
-        readTable<any>(token, currentSpreadsheetId, 'Users'),
-        readTable<any>(token, currentSpreadsheetId, 'Cabang'),
-        readTable<any>(token, currentSpreadsheetId, 'Sekolah'),
-        readTable<any>(token, currentSpreadsheetId, 'Guru'),
-        readTable<any>(token, currentSpreadsheetId, 'TenagaKependidikan'),
-        readTable<any>(token, currentSpreadsheetId, 'KepalaSekolah'),
-        readTable<any>(token, currentSpreadsheetId, 'Siswa'),
-        readTable<any>(token, currentSpreadsheetId, 'SKGuru'),
-        readTable<any>(token, currentSpreadsheetId, 'SKTenagaKependidikan'),
-        readTable<any>(token, currentSpreadsheetId, 'SKKepalaSekolah'),
-        readTable<any>(token, currentSpreadsheetId, 'Notifikasi'),
-        readTable<any>(token, currentSpreadsheetId, 'LogAktivitas'),
-        readTable<any>(token, currentSpreadsheetId, 'Setting'),
-      ]);
+      // 2. Try fast readAll via Apps Script first
+      let freshData: DatabaseState | null = await readAllTables(token, currentSpreadsheetId);
 
-      const freshData: DatabaseState = {
-        users,
-        cabang,
-        sekolah,
-        guru,
-        tendik,
-        kepalaSekolah,
-        siswa,
-        skGuru,
-        skTendik,
-        skKepalaSekolah,
-        notifikasi,
-        logAktivitas,
-        settings,
-      };
+      if (!freshData) {
+        // Fallback: Read all tables in parallel via readTable
+        const [
+          users,
+          cabang,
+          sekolah,
+          guru,
+          tendik,
+          kepalaSekolah,
+          siswa,
+          skGuru,
+          skTendik,
+          skKepalaSekolah,
+          notifikasi,
+          logAktivitas,
+          settings,
+        ] = await Promise.all([
+          readTable<any>(token, currentSpreadsheetId, 'Users'),
+          readTable<any>(token, currentSpreadsheetId, 'Cabang'),
+          readTable<any>(token, currentSpreadsheetId, 'Sekolah'),
+          readTable<any>(token, currentSpreadsheetId, 'Guru'),
+          readTable<any>(token, currentSpreadsheetId, 'TenagaKependidikan'),
+          readTable<any>(token, currentSpreadsheetId, 'KepalaSekolah'),
+          readTable<any>(token, currentSpreadsheetId, 'Siswa'),
+          readTable<any>(token, currentSpreadsheetId, 'SKGuru'),
+          readTable<any>(token, currentSpreadsheetId, 'SKTenagaKependidikan'),
+          readTable<any>(token, currentSpreadsheetId, 'SKKepalaSekolah'),
+          readTable<any>(token, currentSpreadsheetId, 'Notifikasi'),
+          readTable<any>(token, currentSpreadsheetId, 'LogAktivitas'),
+          readTable<any>(token, currentSpreadsheetId, 'Setting'),
+        ]);
+
+        freshData = {
+          users,
+          cabang,
+          sekolah,
+          guru,
+          tendik,
+          kepalaSekolah,
+          siswa,
+          skGuru,
+          skTendik,
+          skKepalaSekolah,
+          notifikasi,
+          logAktivitas,
+          settings,
+        };
+      }
 
       // 3. Seed starter data if database is entirely empty (no schools found)
       if (freshData.sekolah.length === 0 && freshData.cabang.length === 0) {
@@ -779,28 +808,55 @@ export default function App() {
     localStorage.setItem('sim_spreadsheet_id', spreadsheetId);
     localStorage.setItem('sim_drive_folder_id', driveFolderId);
     localStorage.setItem('sim_apps_script_url', appsScriptUrl);
-    alert('Pengaturan disimpan! Sistem akan sinkronisasi ulang.');
+    alert('Pengaturan disimpan! Sistem akan melakukan sinkronisasi dengan Google Sheets.');
     if (accessToken) {
       syncData(accessToken, spreadsheetId);
     } else {
-      syncOfflineData();
+      syncData('', spreadsheetId);
     }
+  };
+
+  const handleTestAppsScriptConnection = async () => {
+    if (!appsScriptUrl) {
+      alert('Mohon masukkan URL Google Apps Script Web App terlebih dahulu.');
+      return;
+    }
+    setTestingConnection(true);
+    try {
+      const res = await fetch(`${appsScriptUrl}?action=ping`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.status === 'success') {
+          alert('✅ KONEKSI BERHASIL!\n\nGoogle Apps Script merespons dengan baik dan terhubung ke spreadsheet Google Sheets!');
+        } else {
+          alert(`⚠️ Apps Script merespons tetapi mengembalikan status error: ${json.error || 'Unknown error'}`);
+        }
+      } else {
+        alert(`❌ Gagal terhubung ke Apps Script (HTTP Status ${res.status}). Pastikan "Who has access" diset ke "Anyone" (Siapa saja).`);
+      }
+    } catch (err: any) {
+      alert(`❌ Gagal terhubung ke Apps Script: ${err.message || err}\n\nPastikan Web App di-deploy dengan opsi:\n- Execute as: Me (Saya)\n- Who has access: Anyone (Siapa Saja)`);
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  const handleCopyAppsScriptCode = () => {
+    navigator.clipboard.writeText(APPS_SCRIPT_CODE);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 3000);
   };
 
   const handleResetSettings = () => {
     if (window.confirm('Reset pengaturan ke database bawaan Klaten?')) {
       setSpreadsheetId(DEFAULT_SPREADSHEET_ID);
       setDriveFolderId(DEFAULT_DRIVE_FOLDER_ID);
-      setAppsScriptUrl('');
+      setAppsScriptUrl(DEFAULT_APPS_SCRIPT_URL);
       localStorage.setItem('sim_spreadsheet_id', DEFAULT_SPREADSHEET_ID);
       localStorage.setItem('sim_drive_folder_id', DEFAULT_DRIVE_FOLDER_ID);
-      localStorage.setItem('sim_apps_script_url', '');
+      localStorage.setItem('sim_apps_script_url', DEFAULT_APPS_SCRIPT_URL);
       localStorage.removeItem('sim_offline_db');
-      if (accessToken) {
-        syncData(accessToken, DEFAULT_SPREADSHEET_ID);
-      } else {
-        syncOfflineData();
-      }
+      syncData(accessToken || '', DEFAULT_SPREADSHEET_ID);
     }
   };
 
@@ -1112,9 +1168,18 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                  <Globe size={14} className="text-rose-600" /> Google Apps Script Web App URL (Optional)
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Globe size={14} className="text-rose-600" /> Google Apps Script Web App URL
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowScriptModal(true)}
+                    className="text-[11px] font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <Code size={13} /> Lihat & Salin Code.gs Lengkap
+                  </button>
                 </label>
                 <input
                   type="url"
@@ -1123,12 +1188,23 @@ export default function App() {
                   placeholder="https://script.google.com/macros/s/.../exec"
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs font-semibold font-mono text-slate-700 focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all"
                 />
-                <span className="text-[10px] text-slate-400 block mt-1">
-                  Semua data CRUD dapat disinkronkan langsung via Apps Script tanpa batas permission atau autentikasi OAuth Google API yang rumit.
-                </span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                  <span>
+                    Sinkronisasi data otomatis lintas perangkat tanpa batasan OAuth Google.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleTestAppsScriptConnection}
+                    disabled={testingConnection}
+                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                  >
+                    {testingConnection ? <RefreshCw size={11} className="animate-spin" /> : <Zap size={11} />}
+                    {testingConnection ? 'Testing...' : 'Tes Koneksi'}
+                  </button>
+                </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
+              <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
                   className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:via-teal-700 hover:to-sky-700 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all shadow-md border border-emerald-400/20 active:scale-[0.98]"
@@ -1137,8 +1213,15 @@ export default function App() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setShowScriptModal(true)}
+                  className="bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold px-3 py-2 rounded-lg cursor-pointer transition-colors border border-teal-200 flex items-center gap-1.5"
+                >
+                  <Code size={14} /> Salin Code.gs
+                </button>
+                <button
+                  type="button"
                   onClick={handleResetSettings}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-3 py-2 rounded-lg cursor-pointer transition-colors"
                 >
                   Reset Default
                 </button>
@@ -1147,13 +1230,15 @@ export default function App() {
 
             <div className="bg-teal-50/50 rounded-xl border border-teal-100/80 p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
               <h4 className="font-bold text-teal-800 flex items-center gap-1.5">
-                <CheckCircle size={14} /> Cara Menghubungkan Spreadsheet Sendiri (Opsional)
+                <CheckCircle size={14} /> Cara Memperbarui Apps Script (Agar Dapat Diakses dari Perangkat Lain)
               </h4>
-              <ol className="list-decimal list-inside space-y-1 text-slate-500">
-                <li>Buat spreadsheet kosong di akun Google Drive Anda.</li>
-                <li>Salin ID Spreadsheet dari alamat URL (karakter panjang diantara d/ dan /edit).</li>
-                <li>Tempel ID tersebut di kolom Spreadsheet ID diatas, lalu simpan.</li>
-                <li>Sistem akan menginisialisasi tabel-tabel secara otomatis di spreadsheet baru tersebut!</li>
+              <ol className="list-decimal list-inside space-y-1.5 text-slate-600">
+                <li>Klik tombol <strong className="text-teal-700 font-bold">"Salin Code.gs"</strong> di atas.</li>
+                <li>Buka Spreadsheet Google Anda &gt; Menu <strong className="text-slate-800">Ekstensi (Extensions)</strong> &gt; <strong className="text-slate-800">Apps Script</strong>.</li>
+                <li>Hapus semua isi kode bawaan, lalu <strong className="text-slate-800">Paste (Tempel)</strong> kode yang sudah disalin.</li>
+                <li>Klik <strong className="text-slate-800">Terapkan (Deploy)</strong> &gt; <strong className="text-slate-800">Terapkan sebagai web app (New deployment)</strong>.</li>
+                <li>Atur <strong className="text-teal-800 font-bold">Jalankan sebagai: Saya (Me)</strong> dan <strong className="text-teal-800 font-bold">Yang memiliki akses: Siapa saja (Anyone)</strong>.</li>
+                <li>Salin URL Web App yang dihasilkan (berakhiran <code className="bg-teal-100 px-1 rounded text-teal-900 font-mono">/exec</code>) lalu simpan di kolom Web App URL di atas.</li>
               </ol>
             </div>
           </div>
@@ -1226,6 +1311,81 @@ export default function App() {
           </div>
         </footer>
       </div>
+
+      {/* APPS SCRIPT CODE MODAL OVERLAY */}
+      {showScriptModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-emerald-900 text-white">
+              <div className="flex items-center gap-2.5">
+                <Code className="text-emerald-300" size={20} />
+                <div>
+                  <h3 className="font-bold text-sm text-white">Kode Google Apps Script Lengkap (Code.gs)</h3>
+                  <p className="text-[11px] text-emerald-200">Salin kode ini ke Apps Script pada Google Spreadsheet Anda</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowScriptModal(false)}
+                className="text-emerald-200 hover:text-white hover:bg-emerald-800 p-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
+              {/* Instructions Callout */}
+              <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 text-amber-900 text-[11px] space-y-1">
+                <p className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle size={14} className="text-amber-600" /> Langkah Penting Deployment Google Apps Script:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-amber-800">
+                  <li>Buka spreadsheet Google Anda &gt; Menu <strong>Ekstensi</strong> &gt; <strong>Apps Script</strong>.</li>
+                  <li>Hapus kode bawaan dan tempel (paste) seluruh isi kode di bawah ini.</li>
+                  <li>Klik tombol <strong>Terapkan (Deploy)</strong> &gt; <strong>Terapkan sebagai web app</strong>.</li>
+                  <li>Atur <strong>Jalankan sebagai: Saya (Me)</strong> dan <strong>Yang memiliki akses: Siapa saja (Anyone)</strong>.</li>
+                  <li>Salin Web App URL yang berakhiran <code className="bg-amber-100 px-1 rounded font-mono text-amber-900">/exec</code> lalu tempelkan pada kolom Pengaturan aplikasi ini.</li>
+                </ol>
+              </div>
+
+              {/* Code Actions Header */}
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Code size={14} className="text-teal-600" /> Script Code.gs (250+ Baris)
+                </span>
+                <button
+                  onClick={handleCopyAppsScriptCode}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs transition-all shadow-sm cursor-pointer active:scale-95"
+                >
+                  {copySuccess ? <Check size={14} /> : <Copy size={14} />}
+                  {copySuccess ? 'Tersalin ke Clipboard!' : 'Salin Kode ke Clipboard'}
+                </button>
+              </div>
+
+              {/* Code display block */}
+              <div className="relative">
+                <pre className="bg-slate-900 text-emerald-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto max-h-[350px] overflow-y-auto select-text border border-slate-800">
+                  <code>{APPS_SCRIPT_CODE}</code>
+                </pre>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Siap menghubungkan perangkat lain secara real-time.
+              </span>
+              <button
+                onClick={() => setShowScriptModal(false)}
+                className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors"
+              >
+                Tutup Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

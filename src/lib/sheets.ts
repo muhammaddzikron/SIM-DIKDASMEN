@@ -74,11 +74,69 @@ export async function getSpreadsheetMetadata(
   };
 }
 
+// Read all database tables at once via Apps Script for maximum speed
+export async function readAllTables(
+  accessToken: string,
+  spreadsheetId: string
+): Promise<any | null> {
+  const appsScriptUrl = localStorage.getItem('sim_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
+  if (appsScriptUrl) {
+    try {
+      const url = `${appsScriptUrl}?action=readAll&spreadsheetId=${encodeURIComponent(spreadsheetId)}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const resJson = await response.json();
+        if (resJson.status === 'success' && resJson.data) {
+          const d = resJson.data;
+          return {
+            users: Array.isArray(d.users) ? d.users : [],
+            cabang: Array.isArray(d.cabang) ? d.cabang : [],
+            sekolah: Array.isArray(d.sekolah) ? d.sekolah : [],
+            guru: Array.isArray(d.guru) ? d.guru : [],
+            tendik: Array.isArray(d.tendik) ? d.tendik : [],
+            kepalaSekolah: Array.isArray(d.kepalaSekolah) ? d.kepalaSekolah : [],
+            siswa: Array.isArray(d.siswa) ? d.siswa : [],
+            skGuru: Array.isArray(d.skGuru) ? d.skGuru : [],
+            skTendik: Array.isArray(d.skTendik) ? d.skTendik : [],
+            skKepalaSekolah: Array.isArray(d.skKepalaSekolah) ? d.skKepalaSekolah : [],
+            notifikasi: Array.isArray(d.notifikasi) ? d.notifikasi : [],
+            logAktivitas: Array.isArray(d.logAktivitas) ? d.logAktivitas : [],
+            settings: Array.isArray(d.settings) ? d.settings : [],
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Apps Script readAllTables failed, falling back to per-table fetch:', err);
+    }
+  }
+  return null;
+}
+
 // Initialize database by creating missing sheets and adding column headers
 export async function initializeDatabase(
   accessToken: string,
   spreadsheetId: string
 ): Promise<void> {
+  const appsScriptUrl = localStorage.getItem('sim_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
+  if (appsScriptUrl) {
+    try {
+      const response = await fetch(`${appsScriptUrl}?action=init&spreadsheetId=${encodeURIComponent(spreadsheetId)}`);
+      if (response.ok) {
+        const resJson = await response.json();
+        if (resJson.status === 'success') {
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Apps Script initializeDatabase call failed:', err);
+    }
+  }
+
+  if (!accessToken) {
+    // If no access token and Apps Script was attempted, gracefully bypass Google Sheets v4 API call
+    return;
+  }
+
   const meta = await getSpreadsheetMetadata(accessToken, spreadsheetId);
   const existingSheetNames = new Set(meta.sheets.map((s) => s.title));
   const missingTables = (Object.keys(SHEET_COLUMNS) as TableName[]).filter(
@@ -198,6 +256,11 @@ export async function readTable<T>(
     } catch (err) {
       console.error(`Apps Script readTable failed for ${tableName}, falling back to standard API:`, err);
     }
+  }
+
+  if (!accessToken) {
+    console.warn(`No access token available to read ${tableName} via Sheets v4 API.`);
+    return [];
   }
 
   const range = `${tableName}!A1:Z10000`;

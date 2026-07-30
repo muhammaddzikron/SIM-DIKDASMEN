@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { DatabaseState, Role, Sekolah } from '../types';
+import { getSchoolStats } from '../lib/schoolStats';
 import {
   School,
   Users as UsersIcon,
@@ -74,23 +75,59 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
     return data.cabang.find((c) => c.id === selectedSchool.cabangId);
   }, [data.cabang, selectedSchool]);
 
+  // Live connected stats for selected school
+  const currentSchoolStats = useMemo(() => {
+    if (!selectedSchool) return null;
+    return getSchoolStats(selectedSchool, data);
+  }, [selectedSchool, data]);
+
   // Teachers in selected school
   const schoolGuruList = useMemo(() => {
-    if (!effectiveSchoolId) return [];
-    return data.guru.filter((g) => g.schoolId === effectiveSchoolId);
-  }, [data.guru, effectiveSchoolId]);
+    if (!effectiveSchoolId || !selectedSchool) return [];
+    const schId = selectedSchool.id;
+    const schNpsn = selectedSchool.npsn;
+    const schName = (selectedSchool.name || '').toLowerCase().trim();
+    return data.guru.filter((g) => {
+      if (g.schoolId === schId || (schNpsn && g.schoolId === schNpsn)) return true;
+      if (g.sekolah) {
+        if (g.sekolah === schId || (schNpsn && g.sekolah === schNpsn)) return true;
+        if (schName && typeof g.sekolah === 'string' && g.sekolah.toLowerCase().trim() === schName) return true;
+      }
+      return false;
+    });
+  }, [data.guru, effectiveSchoolId, selectedSchool]);
 
   // Tendik in selected school
   const schoolTendikList = useMemo(() => {
-    if (!effectiveSchoolId) return [];
-    return (data.tendik || []).filter((t) => t.schoolId === effectiveSchoolId);
-  }, [data.tendik, effectiveSchoolId]);
+    if (!effectiveSchoolId || !selectedSchool) return [];
+    const schId = selectedSchool.id;
+    const schNpsn = selectedSchool.npsn;
+    const schName = (selectedSchool.name || '').toLowerCase().trim();
+    return (data.tendik || []).filter((t) => {
+      if (t.schoolId === schId || (schNpsn && t.schoolId === schNpsn)) return true;
+      if (t.sekolah) {
+        if (t.sekolah === schId || (schNpsn && t.sekolah === schNpsn)) return true;
+        if (schName && typeof t.sekolah === 'string' && t.sekolah.toLowerCase().trim() === schName) return true;
+      }
+      return false;
+    });
+  }, [data.tendik, effectiveSchoolId, selectedSchool]);
 
   // Students in selected school
   const schoolSiswaList = useMemo(() => {
-    if (!effectiveSchoolId) return [];
-    return data.siswa.filter((s) => s.schoolId === effectiveSchoolId);
-  }, [data.siswa, effectiveSchoolId]);
+    if (!effectiveSchoolId || !selectedSchool) return [];
+    const schId = selectedSchool.id;
+    const schNpsn = selectedSchool.npsn;
+    const schName = (selectedSchool.name || '').toLowerCase().trim();
+    return data.siswa.filter((s) => {
+      if (s.schoolId === schId || (schNpsn && s.schoolId === schNpsn)) return true;
+      if (s.sekolah) {
+        if (s.sekolah === schId || (schNpsn && s.sekolah === schNpsn)) return true;
+        if (schName && typeof s.sekolah === 'string' && s.sekolah.toLowerCase().trim() === schName) return true;
+      }
+      return false;
+    });
+  }, [data.siswa, effectiveSchoolId, selectedSchool]);
 
   // Active Principal in selected school
   const activePrincipal = useMemo(() => {
@@ -573,6 +610,63 @@ export default function Dashboard({ data, onNavigateToTab, userRole, userSekolah
               <span className="text-[10px] text-blue-600 font-bold block mt-1">Aktif Belajar</span>
             </div>
           </div>
+
+          {/* Dynamic Connected School Statistics Card Breakdown */}
+          {selectedSchool && currentSchoolStats && (
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-black text-slate-900 text-sm tracking-tight uppercase flex items-center gap-2">
+                    <Activity size={18} className="text-emerald-600" /> Dynamic Connected Statistics (Otomatis Terkoneksi)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Data statistik profil sekolah ini tersambung dan menyesuaikan secara otomatis dari input data Guru, Tendik, &amp; Siswa di masing-masing unit.
+                  </p>
+                </div>
+                <span className="self-start sm:self-auto px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-[10px] rounded-lg flex items-center gap-1 shrink-0">
+                  <ShieldCheck size={12} /> Live Connected
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-blue-600 block">Total Siswa</span>
+                  <span className="text-xl font-black text-blue-950 mt-1 block">{currentSchoolStats.jumlahKeseluruhanSiswa}</span>
+                  <span className="text-[9px] text-blue-700 font-medium truncate block">{currentSchoolStats.jumlahSiswaPerKelas}</span>
+                </div>
+
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-emerald-600 block">Guru GTP</span>
+                  <span className="text-xl font-black text-emerald-950 mt-1 block">{currentSchoolStats.jumlahGtp}</span>
+                  <span className="text-[9px] text-emerald-700 font-medium block">Tetap Persyarikatan</span>
+                </div>
+
+                <div className="p-3 bg-teal-50/70 border border-teal-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-teal-600 block">Guru GTTP</span>
+                  <span className="text-xl font-black text-teal-950 mt-1 block">{currentSchoolStats.jumlahGttp}</span>
+                  <span className="text-[9px] text-teal-700 font-medium block">Tidak Tetap / GTT</span>
+                </div>
+
+                <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-indigo-600 block">DPK / PNS</span>
+                  <span className="text-xl font-black text-indigo-950 mt-1 block">{currentSchoolStats.jumlahDpkPns}</span>
+                  <span className="text-[9px] text-indigo-700 font-medium block">Guru DPK / PNS</span>
+                </div>
+
+                <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-amber-600 block">Tendik KTP</span>
+                  <span className="text-xl font-black text-amber-950 mt-1 block">{currentSchoolStats.jumlahKtp}</span>
+                  <span className="text-[9px] text-amber-700 font-medium block">Tetap Persyarikatan</span>
+                </div>
+
+                <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl text-center">
+                  <span className="text-[10px] font-black uppercase text-purple-600 block">Sertifikasi</span>
+                  <span className="text-xl font-black text-purple-950 mt-1 block">{currentSchoolStats.jumlahGuruSertifikasi}</span>
+                  <span className="text-[9px] text-purple-700 font-medium block">Guru Bersertifikasi</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Profil & Sambutan + Visi & Misi */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

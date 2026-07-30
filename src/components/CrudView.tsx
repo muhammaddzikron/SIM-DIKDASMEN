@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { uploadFileToDrive } from '../lib/drive';
+import { getSchoolStats } from '../lib/schoolStats';
 import {
   JAWA_TENGAH_KABUPATEN,
   KLATEN_KECAMATAN_LIST,
@@ -82,6 +83,8 @@ interface FormField {
   options?: { value: string; label: string }[];
   placeholder?: string;
   required?: boolean;
+  readOnly?: boolean;
+  helpText?: string;
 }
 
 export default function CrudView({
@@ -357,17 +360,17 @@ export default function CrudView({
           { name: 'skPendirianDate', label: 'Tanggal SK Pendirian', type: 'date' },
           { name: 'skIzinOperasional', label: 'SK Izin Operasional', type: 'text', placeholder: 'Nomor SK Izin Operasional...' },
           { name: 'skIzinOperasionalDate', label: 'Tanggal SK Izin Operasional', type: 'date' },
-          { name: 'jumlahSiswaPerKelas', label: 'Jumlah Siswa Per Kelas', type: 'text', placeholder: 'Misal: Rata-rata 28-32 Siswa' },
-          { name: 'jumlahKeseluruhanSiswa', label: 'Jumlah Keseluruhan Siswa', type: 'text', placeholder: 'Misal: 450' },
-          { name: 'jumlahGtp', label: 'Jumlah GTP (Guru Tetap Persyarikatan)', type: 'text', placeholder: 'Misal: 15' },
-          { name: 'jumlahGttp', label: 'Jumlah GTTP (Guru Tidak Tetap Persyarikatan)', type: 'text', placeholder: 'Misal: 5' },
-          { name: 'jumlahKeseluruhanGuru', label: 'Jumlah Keseluruhan Guru', type: 'text', placeholder: 'Misal: 20' },
-          { name: 'jumlahKtp', label: 'Jumlah KTP (Karyawan Tetap Persyarikatan)', type: 'text', placeholder: 'Misal: 4' },
-          { name: 'jumlahKttp', label: 'Jumlah KTTP (Karyawan Tidak Tetap Persyarikatan)', type: 'text', placeholder: 'Misal: 2' },
-          { name: 'jumlahKeseluruhanKaryawan', label: 'Jumlah Keseluruhan Karyawan', type: 'text', placeholder: 'Misal: 6' },
-          { name: 'jumlahGuruSertifikasi', label: 'Jumlah Guru Bersertifikasi', type: 'text', placeholder: 'Misal: 12' },
-          { name: 'jumlahGuruInpassing', label: 'Jumlah Guru Inpassing', type: 'text', placeholder: 'Misal: 3' },
-          { name: 'jumlahDpkPns', label: 'Jumlah DPK / PNS', type: 'text', placeholder: 'Misal: 1' },
+          { name: 'jumlahSiswaPerKelas', label: 'Jumlah Siswa Per Kelas (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Dihitung otomatis berdasarkan data rombel & total siswa aktif' },
+          { name: 'jumlahKeseluruhanSiswa', label: 'Jumlah Keseluruhan Siswa (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari total input data Siswa' },
+          { name: 'jumlahGtp', label: 'Jumlah GTP (Guru Tetap Persyarikatan) (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Guru berpangkat GTP' },
+          { name: 'jumlahGttp', label: 'Jumlah GTTP (Guru Tidak Tetap Persyarikatan) (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Guru berpangkat GTTP/GTT' },
+          { name: 'jumlahKeseluruhanGuru', label: 'Jumlah Keseluruhan Guru (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari total input data Guru' },
+          { name: 'jumlahKtp', label: 'Jumlah KTP (Karyawan Tetap Persyarikatan) (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Tendik berpangkat KTP' },
+          { name: 'jumlahKttp', label: 'Jumlah KTTP (Karyawan Tidak Tetap Persyarikatan) (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Tendik berpangkat KTTP/PTT' },
+          { name: 'jumlahKeseluruhanKaryawan', label: 'Jumlah Keseluruhan Karyawan / Tendik (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari total input data Tenaga Kependidikan' },
+          { name: 'jumlahGuruSertifikasi', label: 'Jumlah Guru Bersertifikasi (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Guru yang sudah lulus PPG/Sertifikasi' },
+          { name: 'jumlahGuruInpassing', label: 'Jumlah Guru Inpassing (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Guru status Inpassing' },
+          { name: 'jumlahDpkPns', label: 'Jumlah DPK / PNS (Otomatis Terkoneksi)', type: 'text', readOnly: true, helpText: 'Tersambung otomatis dari data Guru berstatus PNS / DPK' },
           { name: 'sosmed', label: 'Akun Sosmed Sekolah/Madrasah', type: 'text', placeholder: 'IG: @sdmuh1klaten | FB: SD Muh 1 Klaten' },
           { name: 'operatorName', label: 'Nama Lengkap Operator', type: 'text', placeholder: 'Nama lengkap operator sekolah...' },
           { name: 'operatorPhone', label: 'Nomor HP Operator', type: 'text', placeholder: '08123456789' },
@@ -1049,7 +1052,12 @@ export default function CrudView({
       if (defaults.hasOwnProperty('sekolahId')) defaults.sekolahId = userSekolahId;
     }
 
-    setFormData(defaults);
+    if (tableName === 'Sekolah') {
+      const stats = getSchoolStats(defaults, data);
+      setFormData({ ...defaults, ...stats });
+    } else {
+      setFormData(defaults);
+    }
     setIsModalOpen(true);
   };
 
@@ -1062,7 +1070,13 @@ export default function CrudView({
         ? { name: 'Dokumen Terupload', url: item.fileUrl, id: item.fileId || '' }
         : null
     );
-    setFormData({ ...item });
+
+    if (tableName === 'Sekolah') {
+      const stats = getSchoolStats(item, data);
+      setFormData({ ...item, ...stats });
+    } else {
+      setFormData({ ...item });
+    }
     setIsModalOpen(true);
   };
 
@@ -1180,6 +1194,14 @@ export default function CrudView({
 
     let saveData = { ...formData };
 
+    if (tableName === 'Sekolah') {
+      const liveStats = getSchoolStats({ ...saveData, id: editingId || saveData.id }, data);
+      saveData = {
+        ...saveData,
+        ...liveStats,
+      };
+    }
+
     if (tableName === 'Sekolah' && userRole === 'Sekolah' && !editingId) {
       setFormError('Pihak Sekolah tidak dapat menambah unit sekolah baru. Penambahan unit sekolah hanya dapat dilakukan oleh Pimpinan Cabang.');
       setFormLoading(false);
@@ -1280,8 +1302,12 @@ export default function CrudView({
     csvRows.push(headerLabels.join(';')); // Headers row separated by semicolon for Excel
     
     for (const item of filteredList) {
+      const liveSchoolStats = tableName === 'Sekolah' ? getSchoolStats(item, data) : null;
       const rowValues = headers.map(header => {
         let val = item[header];
+        if (liveSchoolStats && liveSchoolStats.hasOwnProperty(header)) {
+          val = (liveSchoolStats as any)[header] ?? val;
+        }
         if (header === 'cabangId') {
           const cab = data.cabang.find((c) => c.id === val);
           val = cab ? cab.name : val;
@@ -1978,6 +2004,24 @@ export default function CrudView({
 
   // Render Display Helpers
   const renderValue = (item: any, key: string) => {
+    // Automatic Live Calculation for Sekolah Statistic Fields
+    if (tableName === 'Sekolah' && [
+      'jumlahKeseluruhanSiswa', 'jumlahSiswaPerKelas', 'jumlahGtp', 'jumlahGttp',
+      'jumlahKeseluruhanGuru', 'jumlahKtp', 'jumlahKttp', 'jumlahKeseluruhanKaryawan',
+      'jumlahGuruSertifikasi', 'jumlahGuruInpassing', 'jumlahDpkPns'
+    ].includes(key)) {
+      const liveStats = getSchoolStats(item, data);
+      const calculatedVal = (liveStats as any)[key] ?? item[key] ?? '0';
+      return (
+        <span className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+          <span>{calculatedVal}</span>
+          <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded border border-emerald-200/80 dark:border-emerald-800 shrink-0">
+            Auto
+          </span>
+        </span>
+      );
+    }
+
     const val = item[key];
     if (!val) return '-';
 
@@ -2897,19 +2941,31 @@ export default function CrudView({
 
                 return (
                   <div key={field.name} className="space-y-1">
-                    <label className={`text-xs font-bold block ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      {field.label} {field.required && <span className="text-rose-500">*</span>}
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className={`text-xs font-bold block ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {field.label} {field.required && <span className="text-rose-500">*</span>}
+                      </label>
+                      {field.readOnly && (
+                        <span className="text-[9px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 shrink-0">
+                          ⚡ Otomatis Terkoneksi
+                        </span>
+                      )}
+                    </div>
 
                     {field.type === 'select' ? (
                       <select
                         value={formData[field.name] || ''}
                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                         required={field.required}
+                        disabled={field.readOnly}
                         className={`w-full border rounded-lg p-2 text-xs font-medium focus:ring-2 outline-none transition-all ${
-                          isDarkMode 
-                            ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
-                            : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
+                          field.readOnly
+                            ? isDarkMode
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-300 cursor-not-allowed'
+                              : 'bg-slate-100 border-slate-200 text-slate-700 cursor-not-allowed font-bold'
+                            : isDarkMode 
+                              ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
+                              : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
                         }`}
                       >
                         {field.options?.map((opt) => (
@@ -2924,11 +2980,16 @@ export default function CrudView({
                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         required={field.required}
+                        readOnly={field.readOnly}
                         rows={3}
                         className={`w-full border rounded-lg p-2 text-xs font-medium focus:ring-2 outline-none transition-all resize-none ${
-                          isDarkMode 
-                            ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
-                            : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
+                          field.readOnly
+                            ? isDarkMode
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-300 cursor-not-allowed'
+                              : 'bg-slate-100 border-slate-200 text-slate-700 cursor-not-allowed font-bold'
+                            : isDarkMode 
+                              ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
+                              : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
                         }`}
                       />
                     ) : (
@@ -2938,12 +2999,23 @@ export default function CrudView({
                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         required={field.required}
+                        readOnly={field.readOnly}
                         className={`w-full border rounded-lg p-2 text-xs font-medium focus:ring-2 outline-none transition-all ${
-                          isDarkMode 
-                            ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
-                            : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
+                          field.readOnly
+                            ? isDarkMode
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-300 cursor-not-allowed font-bold'
+                              : 'bg-slate-100 border-slate-200 text-slate-700 cursor-not-allowed font-bold'
+                            : isDarkMode 
+                              ? 'bg-slate-850 border-slate-700 text-white focus:ring-blue-500/20' 
+                              : 'bg-white border-slate-200 text-slate-800 focus:ring-blue-500/20'
                         }`}
                       />
+                    )}
+
+                    {field.helpText && (
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium italic mt-0.5">
+                        {field.helpText}
+                      </p>
                     )}
                   </div>
                 );
