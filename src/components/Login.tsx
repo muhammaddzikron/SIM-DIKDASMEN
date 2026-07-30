@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, User, Lock, Eye, EyeOff, AlertCircle, Info } from 'lucide-react';
+import { ShieldCheck, User, Lock, Eye, EyeOff, AlertCircle, Info, RefreshCw } from 'lucide-react';
 import { Role } from '../types';
+import { readAllTables, DEFAULT_SPREADSHEET_ID } from '../lib/sheets';
 
 interface LoginProps {
   onLoginSuccess: (user: any, token: string | null) => void;
@@ -15,38 +16,101 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [syncingSheets, setSyncingSheets] = useState(false);
+  const [dbData, setDbData] = useState<any>(null);
 
-  // Pre-seed offline database if not present, so default users are immediately available
+  // Background fetch latest data from Google Sheets on mount
   useEffect(() => {
-    if (!localStorage.getItem('sim_offline_db')) {
-      const starterUsers = [
-        { id: 'usr-1', email: 'admin@klaten.go.id', name: 'Super Admin Klaten', role: 'Super Admin', password: 'admin', createdAt: new Date().toISOString() },
-        { id: 'usr-2', email: 'admin2@klaten.go.id', name: 'Admin Operator', role: 'Admin', password: 'admin2', createdAt: new Date().toISOString() },
-        { id: 'usr-3', email: 'klaut@pdmklaten.com', name: 'Angga Crisna', role: 'Cabang', password: 'password', cabangId: 'cab-1', createdAt: new Date().toISOString() },
-      ];
-      const starterCabang = [
-        { id: 'cab-1', name: 'Pimpinan Cabang Pendidikan Wilayah V', code: 'CAB-V', username: 'cabang5', password: 'password', defaultEmail: 'klaut@pdmklaten.com' },
-      ];
-      const starterSekolah = [
-        { id: 'sch-1', name: 'SMAN 1 Klaten', npsn: '20309501', cabangId: 'cab-1', username: 'sman1klaten', password: 'password', address: 'Jl. Merbabu No.13, Klaten', status: 'Negeri', level: 'SMA' },
-        { id: 'sch-2', name: 'SMKN 1 Klaten', npsn: '20309502', cabangId: 'cab-1', username: 'smkn1klaten', password: 'password', address: 'Jl. Pemuda No.120, Klaten', status: 'Negeri', level: 'SMK' },
-      ];
-      const freshData = {
-        users: starterUsers,
-        cabang: starterCabang,
-        sekolah: starterSekolah,
-        guru: [],
-        kepalaSekolah: [],
-        siswa: [],
-        skGuru: [],
-        skKepalaSekolah: [],
-        notifikasi: [],
-        logAktivitas: [],
-        settings: [],
-      };
-      localStorage.setItem('sim_offline_db', JSON.stringify(freshData));
+    // 1. Load cached DB immediately if present
+    const cached = localStorage.getItem('sim_offline_db');
+    if (cached) {
+      try {
+        setDbData(JSON.parse(cached));
+      } catch (e) {
+        console.error('Error parsing cached DB:', e);
+      }
     }
+
+    const fetchLatest = async () => {
+      setSyncingSheets(true);
+      try {
+        const spreadsheetId = localStorage.getItem('sim_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
+        const freshDb = await readAllTables('', spreadsheetId);
+        if (freshDb) {
+          localStorage.setItem('sim_offline_db', JSON.stringify(freshDb));
+          setDbData(freshDb);
+        }
+      } catch (err) {
+        console.warn('Background login sync info:', err);
+      } finally {
+        setSyncingSheets(false);
+      }
+    };
+
+    fetchLatest();
   }, []);
+
+  // Compute real accounts list directly from active database
+  const realAccounts = React.useMemo(() => {
+    if (!dbData) return [];
+    const accounts: { id: string; role: string; name: string; username: string; password?: string }[] = [];
+
+    // 1. Users table
+    if (Array.isArray(dbData.users)) {
+      dbData.users.forEach((u: any, idx: number) => {
+        if (u && (u.username || u.email || u.name)) {
+          const uName = (u.username || u.email || u.name || '').trim();
+          if (uName) {
+            accounts.push({
+              id: `usr-${u.id || idx}`,
+              role: u.role || 'Super Admin',
+              name: u.name || u.email || uName,
+              username: uName,
+              password: u.password || '',
+            });
+          }
+        }
+      });
+    }
+
+    // 2. Cabang table
+    if (Array.isArray(dbData.cabang)) {
+      dbData.cabang.forEach((c: any, idx: number) => {
+        if (c && (c.username || c.code || c.name || c.defaultEmail)) {
+          const uName = (c.username || c.code || c.defaultEmail || c.name || '').trim();
+          if (uName && !accounts.some(a => a.username.toLowerCase() === uName.toLowerCase())) {
+            accounts.push({
+              id: `cab-${c.id || idx}`,
+              role: 'Cabang',
+              name: c.name || uName,
+              username: uName,
+              password: c.password || c.defaultPassword || '',
+            });
+          }
+        }
+      });
+    }
+
+    // 3. Sekolah table
+    if (Array.isArray(dbData.sekolah)) {
+      dbData.sekolah.forEach((s: any, idx: number) => {
+        if (s && (s.username || s.npsn || s.name || s.email)) {
+          const uName = (s.username || s.npsn || s.email || s.name || '').trim();
+          if (uName && !accounts.some(a => a.username.toLowerCase() === uName.toLowerCase())) {
+            accounts.push({
+              id: `sch-${s.id || idx}`,
+              role: 'Sekolah',
+              name: s.name || uName,
+              username: uName,
+              password: s.password || '',
+            });
+          }
+        }
+      });
+    }
+
+    return accounts;
+  }, [dbData]);
 
   // Load saved username if remember me was active
   useEffect(() => {
@@ -64,18 +128,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     setError(null);
   };
 
-  const validateUser = (u: string, p: string) => {
+  const validateUser = (u: string, p: string, overrideDb?: any) => {
     const cleanU = u.trim().toLowerCase();
     const cleanP = p.trim();
 
-    // Check cached db
     try {
-      const cached = localStorage.getItem('sim_offline_db');
-      if (cached) {
-        const db = JSON.parse(cached);
+      const db = overrideDb || JSON.parse(localStorage.getItem('sim_offline_db') || '{}');
 
-        // 1. Check Cabang table FIRST for direct login credentials
-        if (db && Array.isArray(db.cabang)) {
+      if (db) {
+        // 1. Check Cabang table for direct login credentials
+        if (Array.isArray(db.cabang)) {
           const matchedCabang = db.cabang.find((c: any) => {
             if (!c) return false;
             const cUser = (c.username || '').trim().toLowerCase();
@@ -106,7 +168,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         }
 
         // 2. Check Sekolah table for direct login credentials
-        if (db && Array.isArray(db.sekolah)) {
+        if (Array.isArray(db.sekolah)) {
           const matchedSekolah = db.sekolah.find((s: any) => {
             if (!s) return false;
             const sUser = (s.username || '').trim().toLowerCase();
@@ -137,7 +199,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         }
 
         // 3. Check users table
-        if (db && Array.isArray(db.users)) {
+        if (Array.isArray(db.users)) {
           const matched = db.users.find((usr: any) => {
             if (!usr) return false;
             const usrU = (usr.username || '').trim().toLowerCase();
@@ -162,12 +224,33 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           });
 
           if (matched) {
+            let resolvedCabangId = matched.cabangId || '';
+            let resolvedSekolahId = matched.sekolahId || '';
+
+            if (matched.role === 'Cabang' && !resolvedCabangId && Array.isArray(db.cabang)) {
+              const matchingC = db.cabang.find((c: any) =>
+                (c.username && c.username.toLowerCase() === cleanU) ||
+                (c.defaultEmail && c.defaultEmail.toLowerCase() === (matched.email || '').toLowerCase()) ||
+                (c.email && c.email.toLowerCase() === (matched.email || '').toLowerCase())
+              );
+              if (matchingC) resolvedCabangId = matchingC.id;
+            }
+
+            if (matched.role === 'Sekolah' && !resolvedSekolahId && Array.isArray(db.sekolah)) {
+              const matchingS = db.sekolah.find((s: any) =>
+                (s.username && s.username.toLowerCase() === cleanU) ||
+                (s.email && s.email.toLowerCase() === (matched.email || '').toLowerCase()) ||
+                (s.npsn && s.npsn.toLowerCase() === cleanU)
+              );
+              if (matchingS) resolvedSekolahId = matchingS.id;
+            }
+
             return {
               role: (matched.role || 'Super Admin') as Role,
               name: matched.name || matched.email || 'User SIM Dikdasmen',
               email: matched.email || `${matched.username || 'user'}@pdmklaten.com`,
-              cabangId: matched.cabangId || '',
-              sekolahId: matched.sekolahId || '',
+              cabangId: resolvedCabangId,
+              sekolahId: resolvedSekolahId,
             };
           }
         }
@@ -176,18 +259,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       console.error('Error reading offline db:', e);
     }
 
-    // Default hardcoded credentials fallback
-    if (cleanU === 'admin' && cleanP === 'admin') {
-      return { role: 'Super Admin' as Role, name: 'Super Admin Klaten', email: 'admin@klaten.go.id', cabangId: '', sekolahId: '' };
-    }
-    if (cleanU === 'admin2' && cleanP === 'admin2') {
-      return { role: 'Admin' as Role, name: 'Admin Operator', email: 'admin2@klaten.go.id', cabangId: '', sekolahId: '' };
-    }
-
     return null;
   };
 
-  const handleLogin = (uInput: string, pInput: string) => {
+  const handleLogin = async (uInput: string, pInput: string) => {
     setError(null);
     const u = uInput.trim();
     const p = pInput.trim();
@@ -197,7 +272,25 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       return;
     }
 
-    const creds = validateUser(u, p);
+    setLoading(true);
+    let creds = validateUser(u, p);
+
+    // If local offline cache didn't match, attempt a live fetch from Google Sheets
+    if (!creds) {
+      try {
+        const spreadsheetId = localStorage.getItem('sim_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
+        const freshDb = await readAllTables('', spreadsheetId);
+        if (freshDb) {
+          localStorage.setItem('sim_offline_db', JSON.stringify(freshDb));
+          creds = validateUser(u, p, freshDb);
+        }
+      } catch (err) {
+        console.warn('Live fetch on login failed:', err);
+      }
+    }
+
+    setLoading(false);
+
     if (!creds) {
       setError('Username atau Password salah. Silakan periksa kembali username dan password Anda.');
       return;
@@ -263,8 +356,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </div>
           <h1 className="text-xl font-bold tracking-tight">SIM DIKDASMEN</h1>
           <p className="text-emerald-100 text-xs mt-1 font-medium">Kabupaten Klaten</p>
-          <div className="mt-3.5 inline-block bg-white/15 text-white text-[10px] px-2.5 py-1 rounded-full border border-white/25 backdrop-blur-xs font-semibold">
-            Sistem Informasi Manajemen Terpadu
+          <div className="mt-3.5 inline-flex items-center gap-1.5 bg-white/15 text-white text-[10px] px-2.5 py-1 rounded-full border border-white/25 backdrop-blur-xs font-semibold">
+            {syncingSheets && <RefreshCw size={10} className="animate-spin" />}
+            <span>Sistem Informasi Manajemen Terpadu</span>
           </div>
         </div>
 
@@ -327,20 +421,60 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </div>
 
             {/* Remember Me Option */}
-            <div className="flex items-center">
-              <input
-                id="remember_me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer h-3.5 w-3.5"
-              />
-              <label htmlFor="remember_me" className="ml-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
-                Ingat Saya
-              </label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember_me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer h-3.5 w-3.5"
+                />
+                <label htmlFor="remember_me" className="ml-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                  Ingat Saya
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+              >
+                Lupa Password?
+              </button>
             </div>
 
-
+            {/* Quick Auto-Fill from Real Inputted Accounts */}
+            {realAccounts.length > 0 && (
+              <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Pilih Akun Terdaftar:
+                  </div>
+                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                    {realAccounts.length} Akun Real
+                  </span>
+                </div>
+                <select
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const acc = realAccounts.find((a) => a.id === selectedId);
+                    if (acc) {
+                      handlePresetFill(acc.username, acc.password || '');
+                    }
+                  }}
+                  defaultValue=""
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer transition-all"
+                >
+                  <option value="" disabled>-- Isi Otomatis dengan Akun Terdaftar --</option>
+                  {realAccounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      [{acc.role}] {acc.name} ({acc.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button
@@ -357,17 +491,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 'Masuk Sekarang'
               )}
             </button>
-
-            {/* Forgot Password link under submit button */}
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
-              >
-                Lupa Password?
-              </button>
-            </div>
           </form>
 
           <div className="border-t border-slate-100 pt-4 text-center">
