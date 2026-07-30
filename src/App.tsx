@@ -569,8 +569,8 @@ export default function App() {
     if (mappedTable === 'Cabang') {
       const codeClean = (newRecord.code || 'cab').toLowerCase().replace(/[^a-z0-9]/g, '');
       const userEmail = record.defaultEmail || record.email || `cabang.${codeClean}@pdmklaten.com`;
-      const userPassword = record.password || record.defaultPassword || 'cabang123';
-      const username = record.username || `cabang.${codeClean}`;
+      const userPassword = (record.password || record.defaultPassword || '').trim() || 'cabang123';
+      const username = (record.username || '').trim() || `cabang.${codeClean}`;
 
       newRecord.username = username;
       newRecord.password = userPassword;
@@ -592,8 +592,8 @@ export default function App() {
     if (mappedTable === 'Sekolah') {
       const npsnClean = (newRecord.npsn || 'sch').toLowerCase().replace(/[^a-z0-9]/g, '');
       const userEmail = record.email || `${npsnClean}@sekolah.id`;
-      const userPassword = record.password || 'sekolah123';
-      const username = record.username || npsnClean;
+      const userPassword = (record.password || '').trim() || 'sekolah123';
+      const username = (record.username || '').trim() || npsnClean;
 
       newRecord.username = username;
       newRecord.password = userPassword;
@@ -960,14 +960,19 @@ export default function App() {
 
     // 3. If Cabang role / entity exists
     if (userProfile.cabangId || activeRole === 'Cabang') {
-      const targetCabang = data.cabang.find((c) => c.id === userProfile.cabangId) || data.cabang[0];
+      const targetCabang = data.cabang.find((c) =>
+        (userProfile.cabangId && c.id === userProfile.cabangId) ||
+        (userProfile.username && c.username === userProfile.username) ||
+        (userProfile.email && (c.defaultEmail === userProfile.email || (c as any).email === userProfile.email))
+      ) || data.cabang[0];
+
       if (targetCabang) {
         const updatedCabangObj = {
           ...targetCabang,
           name: updated.name || targetCabang.name,
           username: updated.username || targetCabang.username,
           defaultEmail: updated.email || targetCabang.defaultEmail,
-          email: updated.email || targetCabang.email,
+          email: updated.email || (targetCabang as any).email || targetCabang.defaultEmail,
           ...(updated.password ? { password: updated.password } : {}),
         };
         try {
@@ -980,7 +985,12 @@ export default function App() {
 
     // 4. If Sekolah role / entity exists
     if (userProfile.sekolahId || activeRole === 'Sekolah') {
-      const targetSekolah = data.sekolah.find((s) => s.id === userProfile.sekolahId) || data.sekolah[0];
+      const targetSekolah = data.sekolah.find((s) =>
+        (userProfile.sekolahId && s.id === userProfile.sekolahId) ||
+        (userProfile.username && s.username === userProfile.username) ||
+        (userProfile.email && s.email === userProfile.email)
+      ) || data.sekolah[0];
+
       if (targetSekolah) {
         const updatedSekolahObj = {
           ...targetSekolah,
@@ -1009,15 +1019,23 @@ export default function App() {
     if (cached) {
       const localDb = JSON.parse(cached);
       if (Array.isArray(localDb.users)) {
-        const uIdx = localDb.users.findIndex((u: any) => u.id === userProfile.id || u.email === userProfile.email);
+        const uIdx = localDb.users.findIndex((u: any) =>
+          u.id === userProfile.id ||
+          (userProfile.email && u.email === userProfile.email) ||
+          (userProfile.username && u.username === userProfile.username)
+        );
         if (uIdx >= 0) {
           localDb.users[uIdx] = { ...localDb.users[uIdx], ...newFields };
         } else {
           localDb.users.push(updatedProfileObj);
         }
       }
-      if (userProfile.cabangId && Array.isArray(localDb.cabang)) {
-        const cIdx = localDb.cabang.findIndex((c: any) => c.id === userProfile.cabangId);
+      if (Array.isArray(localDb.cabang)) {
+        const cIdx = localDb.cabang.findIndex((c: any) =>
+          (userProfile.cabangId && c.id === userProfile.cabangId) ||
+          (userProfile.username && c.username === userProfile.username) ||
+          (userProfile.email && (c.defaultEmail === userProfile.email || c.email === userProfile.email))
+        );
         if (cIdx >= 0) {
           localDb.cabang[cIdx] = {
             ...localDb.cabang[cIdx],
@@ -1029,8 +1047,12 @@ export default function App() {
           };
         }
       }
-      if (userProfile.sekolahId && Array.isArray(localDb.sekolah)) {
-        const sIdx = localDb.sekolah.findIndex((s: any) => s.id === userProfile.sekolahId);
+      if (Array.isArray(localDb.sekolah)) {
+        const sIdx = localDb.sekolah.findIndex((s: any) =>
+          (userProfile.sekolahId && s.id === userProfile.sekolahId) ||
+          (userProfile.username && s.username === userProfile.username) ||
+          (userProfile.email && s.email === userProfile.email)
+        );
         if (sIdx >= 0) {
           localDb.sekolah[sIdx] = {
             ...localDb.sekolah[sIdx],

@@ -4,7 +4,7 @@ export const DEFAULT_SPREADSHEET_ID = '1BmBbXaumg7iI7YGn_8_mNBThOeqnR8YGrncXr0dg
 export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBp2XDUp2Tj325ijjDFNPdDFGZ8eM1X6CgNhlOMvFSoXv5XtcfDFlKkEaDAMkzQ4nE/exec';
 
 export const SHEET_COLUMNS: Record<TableName, string[]> = {
-  Users: ['id', 'email', 'name', 'role', 'password', 'cabangId', 'sekolahId', 'createdAt'],
+  Users: ['id', 'email', 'username', 'name', 'role', 'password', 'cabangId', 'sekolahId', 'createdAt'],
   Cabang: ['id', 'name', 'code', 'username', 'password', 'defaultEmail'],
   Sekolah: [
     'id', 'name', 'npsn', 'username', 'password', 'cabangId', 'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota',

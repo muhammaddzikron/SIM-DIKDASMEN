@@ -74,47 +74,26 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (cached) {
         const db = JSON.parse(cached);
 
-        // 1. Check users table first
-        if (db && Array.isArray(db.users)) {
-          const matched = db.users.find(
-            (usr: any) =>
-              usr &&
-              ((usr.username && usr.username.toLowerCase() === cleanU) ||
-               (usr.email && usr.email.toLowerCase() === cleanU) ||
-               (usr.name && usr.name.toLowerCase() === cleanU) ||
-               (usr.id && usr.id.toLowerCase() === cleanU) ||
-               (cleanU === 'admin' && (usr.role === 'Super Admin' || usr.email === 'admin@klaten.go.id'))) &&
-              (usr.password && String(usr.password).trim() !== ''
-                ? String(usr.password).trim() === cleanP
-                : cleanP === 'admin' || cleanP === 'password' || cleanP === 'cabang123' || cleanP === 'sekolah123')
-          );
-          if (matched) {
-            return {
-              role: (matched.role || 'Super Admin') as Role,
-              name: matched.name || matched.email || 'User SIM Dikdasmen',
-              email: matched.email || `${matched.username || 'user'}@pdmklaten.com`,
-              cabangId: matched.cabangId || '',
-              sekolahId: matched.sekolahId || '',
-            };
-          }
-        }
-
-        // 2. Check Cabang table for direct login credentials
+        // 1. Check Cabang table FIRST for direct login credentials
         if (db && Array.isArray(db.cabang)) {
-          const matchedCabang = db.cabang.find(
-            (c: any) =>
-              c &&
-              ((c.username && c.username.toLowerCase() === cleanU) ||
-               (c.defaultEmail && c.defaultEmail.toLowerCase() === cleanU) ||
-               (c.email && c.email.toLowerCase() === cleanU) ||
-               (c.code && c.code.toLowerCase() === cleanU) ||
-               (c.name && c.name.toLowerCase() === cleanU)) &&
-              ((c.password && String(c.password).trim() !== '')
-                ? String(c.password).trim() === cleanP
-                : (c.defaultPassword && String(c.defaultPassword).trim() !== '')
-                ? String(c.defaultPassword).trim() === cleanP
-                : cleanP === 'password' || cleanP === 'cabang123')
-          );
+          const matchedCabang = db.cabang.find((c: any) => {
+            if (!c) return false;
+            const cUser = (c.username || '').trim().toLowerCase();
+            const cCode = (c.code || '').trim().toLowerCase();
+            const cEmail = (c.defaultEmail || c.email || '').trim().toLowerCase();
+            const cName = (c.name || '').trim().toLowerCase();
+            const cId = (c.id || '').trim().toLowerCase();
+
+            const uMatch = cleanU === cUser || cleanU === cCode || cleanU === cEmail || cleanU === cName || cleanU === cId;
+            if (!uMatch) return false;
+
+            const cPass = String(c.password || c.defaultPassword || '').trim();
+            if (cPass !== '') {
+              return cleanP === cPass;
+            }
+            return cleanP === 'password' || cleanP === 'cabang123';
+          });
+
           if (matchedCabang) {
             return {
               role: 'Cabang' as Role,
@@ -126,19 +105,26 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           }
         }
 
-        // 3. Check Sekolah table for direct login credentials
+        // 2. Check Sekolah table for direct login credentials
         if (db && Array.isArray(db.sekolah)) {
-          const matchedSekolah = db.sekolah.find(
-            (s: any) =>
-              s &&
-              ((s.username && s.username.toLowerCase() === cleanU) ||
-               (s.npsn && s.npsn.toLowerCase() === cleanU) ||
-               (s.email && s.email.toLowerCase() === cleanU) ||
-               (s.name && s.name.toLowerCase() === cleanU)) &&
-              ((s.password && String(s.password).trim() !== '')
-                ? String(s.password).trim() === cleanP
-                : cleanP === 'sekolah123' || cleanP === '123456' || cleanP === 'password')
-          );
+          const matchedSekolah = db.sekolah.find((s: any) => {
+            if (!s) return false;
+            const sUser = (s.username || '').trim().toLowerCase();
+            const sNpsn = (s.npsn || '').trim().toLowerCase();
+            const sEmail = (s.email || '').trim().toLowerCase();
+            const sName = (s.name || '').trim().toLowerCase();
+            const sId = (s.id || '').trim().toLowerCase();
+
+            const uMatch = cleanU === sUser || cleanU === sNpsn || cleanU === sEmail || cleanU === sName || cleanU === sId;
+            if (!uMatch) return false;
+
+            const sPass = String(s.password || '').trim();
+            if (sPass !== '') {
+              return cleanP === sPass;
+            }
+            return cleanP === 'sekolah123' || cleanP === '123456' || cleanP === 'password';
+          });
+
           if (matchedSekolah) {
             return {
               role: 'Sekolah' as Role,
@@ -146,6 +132,42 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               email: matchedSekolah.email || matchedSekolah.username || `${matchedSekolah.npsn}@sekolah.id`,
               cabangId: matchedSekolah.cabangId || '',
               sekolahId: matchedSekolah.id,
+            };
+          }
+        }
+
+        // 3. Check users table
+        if (db && Array.isArray(db.users)) {
+          const matched = db.users.find((usr: any) => {
+            if (!usr) return false;
+            const usrU = (usr.username || '').trim().toLowerCase();
+            const usrE = (usr.email || '').trim().toLowerCase();
+            const usrN = (usr.name || '').trim().toLowerCase();
+            const usrId = (usr.id || '').trim().toLowerCase();
+
+            const uMatch =
+              cleanU === usrU ||
+              cleanU === usrE ||
+              cleanU === usrN ||
+              cleanU === usrId ||
+              (cleanU === 'admin' && (usr.role === 'Super Admin' || usr.role === 'Admin' || usr.email === 'admin@klaten.go.id'));
+
+            if (!uMatch) return false;
+
+            const usrP = String(usr.password || '').trim();
+            if (usrP !== '') {
+              return cleanP === usrP;
+            }
+            return cleanP === 'admin' || cleanP === 'password' || cleanP === 'cabang123' || cleanP === 'sekolah123';
+          });
+
+          if (matched) {
+            return {
+              role: (matched.role || 'Super Admin') as Role,
+              name: matched.name || matched.email || 'User SIM Dikdasmen',
+              email: matched.email || `${matched.username || 'user'}@pdmklaten.com`,
+              cabangId: matched.cabangId || '',
+              sekolahId: matched.sekolahId || '',
             };
           }
         }
@@ -177,7 +199,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
     const creds = validateUser(u, p);
     if (!creds) {
-      setError('Username atau Password salah. Gunakan Username: admin & Password: admin');
+      setError('Username atau Password salah. Silakan periksa kembali username dan password Anda.');
       return;
     }
 

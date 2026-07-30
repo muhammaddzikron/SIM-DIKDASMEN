@@ -22,7 +22,7 @@ export const APPS_SCRIPT_CODE = `/**
 
 // Structure Schema Kolom untuk Setiap Tabel
 var SHEET_COLUMNS = {
-  "Users": ["id", "email", "name", "role", "password", "cabangId", "sekolahId", "createdAt"],
+  "Users": ["id", "email", "username", "name", "role", "password", "cabangId", "sekolahId", "createdAt"],
   "Cabang": ["id", "name", "code", "username", "password", "defaultEmail"],
   "Sekolah": [
     "id", "name", "npsn", "username", "password", "cabangId", "address", "rtRw", "postalCode", "kelurahan", "kecamatan", "kabupatenKota",
