@@ -243,7 +243,7 @@ export async function readTable<T>(
   const appsScriptUrl = localStorage.getItem('sim_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
   if (appsScriptUrl) {
     try {
-      const url = `${appsScriptUrl}?action=read&sheet=${encodeURIComponent(tableName)}`;
+      const url = `${appsScriptUrl}?action=read&sheet=${encodeURIComponent(tableName)}&spreadsheetId=${encodeURIComponent(spreadsheetId)}`;
       const response = await fetch(url);
       if (response.ok) {
         const resJson = await response.json();
@@ -254,11 +254,24 @@ export async function readTable<T>(
         }
       }
     } catch (err) {
-      console.error(`Apps Script readTable failed for ${tableName}, falling back to standard API:`, err);
+      console.warn(`Apps Script readTable info for ${tableName}, falling back to standard API or local storage:`, err);
     }
   }
 
   if (!accessToken) {
+    // If Apps Script fetch failed AND there is no OAuth token, check local storage database
+    const localDbStr = localStorage.getItem('sim_offline_db');
+    if (localDbStr) {
+      try {
+        const localDb = JSON.parse(localDbStr);
+        const mapKey = tableName === 'Users' ? 'users' : tableName === 'Cabang' ? 'cabang' : tableName === 'Sekolah' ? 'sekolah' : tableName === 'Guru' ? 'guru' : tableName === 'TenagaKependidikan' ? 'tendik' : tableName === 'KepalaSekolah' ? 'kepalaSekolah' : tableName === 'Siswa' ? 'siswa' : tableName === 'SKGuru' ? 'skGuru' : tableName === 'SKTenagaKependidikan' ? 'skTendik' : tableName === 'SKKepalaSekolah' ? 'skKepalaSekolah' : tableName === 'Notifikasi' ? 'notifikasi' : tableName === 'LogAktivitas' ? 'logAktivitas' : tableName === 'Setting' ? 'settings' : (tableName as string).toLowerCase();
+        if (Array.isArray(localDb[mapKey])) {
+          return localDb[mapKey] as T[];
+        }
+      } catch (e) {
+        // Ignore parse error
+      }
+    }
     console.warn(`No access token available to read ${tableName} via Sheets v4 API.`);
     return [];
   }
@@ -321,6 +334,7 @@ export async function insertRecord(
           action: 'insert',
           sheet: tableName,
           payload: record,
+          spreadsheetId: spreadsheetId,
         }),
       });
       if (response.ok) {
@@ -332,7 +346,7 @@ export async function insertRecord(
         }
       }
     } catch (err) {
-      console.error(`Apps Script insertRecord failed for ${tableName}, falling back to standard API:`, err);
+      console.warn(`Apps Script insertRecord info for ${tableName}, falling back to standard API:`, err);
     }
   }
 
@@ -383,6 +397,7 @@ export async function updateRecord(
           action: 'update',
           sheet: tableName,
           payload: { id, ...updatedFields },
+          spreadsheetId: spreadsheetId,
         }),
       });
       if (response.ok) {
@@ -394,7 +409,7 @@ export async function updateRecord(
         }
       }
     } catch (err) {
-      console.error(`Apps Script updateRecord failed for ${tableName}, falling back to standard API:`, err);
+      console.warn(`Apps Script updateRecord info for ${tableName}, falling back to standard API:`, err);
     }
   }
 
@@ -487,6 +502,7 @@ export async function deleteRecord(
           action: 'delete',
           sheet: tableName,
           payload: { id },
+          spreadsheetId: spreadsheetId,
         }),
       });
       if (response.ok) {
@@ -498,7 +514,7 @@ export async function deleteRecord(
         }
       }
     } catch (err) {
-      console.error(`Apps Script deleteRecord failed for ${tableName}, falling back to standard API:`, err);
+      console.warn(`Apps Script deleteRecord info for ${tableName}, falling back to standard API:`, err);
     }
   }
 

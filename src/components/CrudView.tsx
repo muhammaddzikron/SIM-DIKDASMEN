@@ -24,6 +24,7 @@ import {
   FileCheck,
   Building,
   ExternalLink,
+  Bell,
 } from 'lucide-react';
 import { uploadFileToDrive } from '../lib/drive';
 import { getSchoolStats } from '../lib/schoolStats';
@@ -73,6 +74,7 @@ interface CrudViewProps {
   onEdit: (id: string, record: Record<string, any>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onBulkDelete?: (ids: string[]) => Promise<void>;
+  onNavigateToTab?: (tab: string) => void;
   isDarkMode?: boolean;
 }
 
@@ -99,12 +101,14 @@ export default function CrudView({
   onEdit,
   onDelete,
   onBulkDelete,
+  onNavigateToTab,
   isDarkMode = false,
 }: CrudViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSKForPrint, setSelectedSKForPrint] = useState<any | null>(null);
+  const [selectedNotificationForView, setSelectedNotificationForView] = useState<any | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [formLoading, setFormLoading] = useState(false);
@@ -122,6 +126,21 @@ export default function CrudView({
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importLogs, setImportLogs] = useState<string[]>([]);
+
+  // Handler for Viewing Notification Detail
+  const handleViewNotification = async (notifItem: any) => {
+    setSelectedNotificationForView(notifItem);
+    if (notifItem.isRead !== 'true') {
+      try {
+        await onEdit(notifItem.id || notifItem.key, {
+          ...notifItem,
+          isRead: 'true',
+        });
+      } catch (err) {
+        console.error('Gagal memperbarui status notifikasi:', err);
+      }
+    }
+  };
 
   // File Upload State
   const [uploadProgress, setUploadProgress] = useState(false);
@@ -249,8 +268,8 @@ export default function CrudView({
         return [
           { name: 'name', label: 'Nama Pimpinan Cabang', type: 'text', placeholder: 'Misal: Pimpinan Cabang Delanggu', required: true },
           { name: 'code', label: 'Kode Cabang', type: 'text', placeholder: 'Misal: CAB-DLG', required: true },
-          { name: 'username', label: 'Username Akses Login Cabang', type: 'text', placeholder: 'Username login cabang (misal: cabang.delanggu)...', required: true },
-          { name: 'password', label: 'Password Akses Login Cabang', type: 'password', placeholder: 'Password login cabang...', required: true },
+          { name: 'username', label: 'Username Akses Login Cabang', type: 'text', placeholder: 'Username login cabang (kosongkan jika tidak diubah)...' },
+          { name: 'password', label: 'Password Akses Login Cabang', type: 'password', placeholder: 'Password login cabang (kosongkan jika tidak diubah)...' },
           { name: 'defaultEmail', label: 'Email Resmi Cabang (Opsional)', type: 'text', placeholder: 'cabang.delanggu@pdmklaten.com' },
         ];
 
@@ -1193,6 +1212,24 @@ export default function CrudView({
     setFormError(null);
 
     let saveData = { ...formData };
+
+    if (tableName === 'Cabang' && editingId) {
+      const existingCabang = (data.cabang || []).find((c: any) => (c.id || c.key) === editingId);
+      if (existingCabang) {
+        if (!saveData.username || String(saveData.username).trim() === '') {
+          saveData.username = existingCabang.username || '';
+        }
+        if (!saveData.password || String(saveData.password).trim() === '') {
+          saveData.password = existingCabang.password || '';
+        }
+        if (!saveData.defaultEmail || String(saveData.defaultEmail).trim() === '') {
+          saveData.defaultEmail = existingCabang.defaultEmail || (existingCabang as any).email || '';
+        }
+        if (!saveData.email || String(saveData.email).trim() === '') {
+          saveData.email = (existingCabang as any).email || existingCabang.defaultEmail || '';
+        }
+      }
+    }
 
     if (tableName === 'Sekolah') {
       const liveStats = getSchoolStats({ ...saveData, id: editingId || saveData.id }, data);
@@ -2195,6 +2232,30 @@ export default function CrudView({
       return <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{String(val)}</span>;
     }
 
+    if (key === 'isRead') {
+      const isReadBool = val === 'true' || val === true;
+      return isReadBool ? (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-block">
+          Sudah Dibaca
+        </span>
+      ) : (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 animate-pulse inline-block">
+          Belum Dibaca
+        </span>
+      );
+    }
+
+    if (key === 'type' && tableName === 'Notifikasi') {
+      if (val === 'warning') {
+        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-200 uppercase inline-block">Peringatan</span>;
+      } else if (val === 'danger' || val === 'error') {
+        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-900 border border-rose-200 uppercase inline-block">Bahaya</span>;
+      } else if (val === 'success') {
+        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-200 uppercase inline-block">Sukses</span>;
+      }
+      return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-sky-100 text-sky-900 border border-sky-200 uppercase inline-block">{val || 'Info'}</span>;
+    }
+
     // Status Styling
     if (key === 'status') {
       let badgeClass = 'bg-slate-100 text-slate-700';
@@ -2526,6 +2587,15 @@ export default function CrudView({
 
                     {tableName !== 'LogAktivitas' && (
                       <td className="py-2 px-3 text-center flex items-center justify-center gap-1.5 print:hidden">
+                        {tableName === 'Notifikasi' && (
+                          <button
+                            onClick={() => handleViewNotification(item)}
+                            className="p-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs shrink-0"
+                            title="Lihat Detail Notifikasi & Proses Data"
+                          >
+                            <Eye size={12} /> Lihat Detail
+                          </button>
+                        )}
                         {['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName) && (
                           <button
                             onClick={() => setSelectedSKForPrint(item)}
@@ -3241,6 +3311,154 @@ export default function CrudView({
                   <p className="text-[10px] text-slate-500">NBM. 882.341</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Notifikasi untuk Admin / User */}
+      {selectedNotificationForView && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl shadow-xl border max-w-lg w-full flex flex-col animate-slideUp ${
+            isDarkMode ? 'bg-[#111827] border-slate-800 text-white' : 'bg-white border-slate-100 text-slate-900'
+          }`}>
+            {/* Modal Header */}
+            <div className={`p-5 border-b flex items-center justify-between rounded-t-2xl ${
+              isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50/80 border-slate-100'
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 bg-blue-500/10 text-blue-600 rounded-xl border border-blue-500/20">
+                  <Bell size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm md:text-base">Detail Notifikasi Sistem</h3>
+                  <p className="text-[11px] text-slate-400">Pemberitahuan Sistem SIM Dikdasmen</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedNotificationForView(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200/50 rounded-lg transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Content Body */}
+            <div className="p-6 space-y-4">
+              {/* Notification Badge Status Bar */}
+              <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-md font-extrabold text-[11px] uppercase ${
+                    selectedNotificationForView.type === 'warning'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : selectedNotificationForView.type === 'danger' || selectedNotificationForView.type === 'error'
+                      ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                      : selectedNotificationForView.type === 'success'
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      : 'bg-sky-100 text-sky-900 border border-sky-300'
+                  }`}>
+                    Tipe: {selectedNotificationForView.type || 'Info'}
+                  </span>
+
+                  <span className="px-2.5 py-1 rounded-md font-bold text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle size={12} className="text-emerald-600" /> Sudah Dibaca
+                  </span>
+                </div>
+
+                <span className="text-[11px] font-mono text-slate-400 font-semibold">
+                  {selectedNotificationForView.createdAt || selectedNotificationForView.timestamp || 'Hari ini'}
+                </span>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Judul Notifikasi</label>
+                <h4 className="text-base font-black text-slate-900 dark:text-white leading-snug">
+                  {selectedNotificationForView.title || 'Pemberitahuan Sistem'}
+                </h4>
+              </div>
+
+              {/* Message Box */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Isi Rincian Pesan Notifikasi</label>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-medium whitespace-pre-wrap">
+                  {selectedNotificationForView.message || 'Tidak ada rincian pesan tambahan.'}
+                </div>
+              </div>
+
+              {/* Smart Related Module Actions */}
+              {(() => {
+                const msg = ((selectedNotificationForView.title || '') + ' ' + (selectedNotificationForView.message || '')).toLowerCase();
+                let targetTab = '';
+                let targetLabel = '';
+
+                if (msg.includes('kepala sekolah') || msg.includes('ks') || msg.includes('jabatan')) {
+                  targetTab = 'kepalaSekolah';
+                  targetLabel = 'Proses / Kelola SIM Kepala Sekolah';
+                } else if (msg.includes('sk guru') || msg.includes('skguru')) {
+                  targetTab = 'skGuru';
+                  targetLabel = 'Proses / Verifikasi Pengajuan SK Guru';
+                } else if (msg.includes('sk tendik') || msg.includes('sktendik')) {
+                  targetTab = 'skTendik';
+                  targetLabel = 'Proses / Verifikasi Pengajuan SK Tendik';
+                } else if (msg.includes('sk kepala') || msg.includes('skks')) {
+                  targetTab = 'skKepalaSekolah';
+                  targetLabel = 'Proses / Verifikasi Pengajuan SK Kepala Sekolah';
+                } else if (msg.includes('guru')) {
+                  targetTab = 'guru';
+                  targetLabel = 'Buka SIM Data Guru';
+                } else if (msg.includes('tendik')) {
+                  targetTab = 'tendik';
+                  targetLabel = 'Buka SIM Tenaga Kependidikan';
+                } else if (msg.includes('siswa')) {
+                  targetTab = 'siswa';
+                  targetLabel = 'Buka SIM Data Siswa';
+                } else if (msg.includes('sekolah')) {
+                  targetTab = 'sekolah';
+                  targetLabel = 'Buka Profil & Data Sekolah';
+                } else if (msg.includes('mutasi')) {
+                  targetTab = 'mutasi';
+                  targetLabel = 'Buka SIM Data Mutasi';
+                } else if (msg.includes('user') || msg.includes('pengguna')) {
+                  targetTab = 'users';
+                  targetLabel = 'Buka Manajemen User';
+                }
+
+                if (targetTab && onNavigateToTab) {
+                  return (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-[11px] font-bold text-slate-500 mb-2">Tindakan Lanjutan Admin:</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tab = targetTab;
+                          setSelectedNotificationForView(null);
+                          onNavigateToTab(tab);
+                        }}
+                        className="w-full bg-gradient-to-r from-teal-600 via-emerald-600 to-sky-600 hover:from-teal-700 hover:via-emerald-700 hover:to-sky-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                      >
+                        <ExternalLink size={14} />
+                        <span>{targetLabel}</span>
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className={`p-4 border-t flex items-center justify-between rounded-b-2xl ${
+              isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-100'
+            }`}>
+              <span className="text-[10px] text-slate-400 font-medium">Otomatis ditandai 'Sudah Dibaca'</span>
+              <button
+                type="button"
+                onClick={() => setSelectedNotificationForView(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>

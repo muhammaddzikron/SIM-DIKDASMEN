@@ -611,8 +611,46 @@ export default function App() {
     const mappedTable = TAB_TO_TABLE_MAP[currentTab];
     if (!mappedTable) return;
 
+    let fieldsToSave = { ...updatedFields };
+
+    if (mappedTable === 'Cabang') {
+      const existingCabang = data.cabang.find((c) => (c.id || c.key) === id);
+      if (existingCabang) {
+        if (!fieldsToSave.username || String(fieldsToSave.username).trim() === '') {
+          fieldsToSave.username = existingCabang.username || '';
+        }
+        if (!fieldsToSave.password || String(fieldsToSave.password).trim() === '') {
+          fieldsToSave.password = existingCabang.password || '';
+        }
+        if (!fieldsToSave.defaultEmail || String(fieldsToSave.defaultEmail).trim() === '') {
+          fieldsToSave.defaultEmail = existingCabang.defaultEmail || (existingCabang as any).email || '';
+        }
+        if (!fieldsToSave.email || String(fieldsToSave.email).trim() === '') {
+          fieldsToSave.email = (existingCabang as any).email || existingCabang.defaultEmail || '';
+        }
+
+        // Sync corresponding user account in Users table
+        const matchedUser = data.users.find(
+          (u) => u.cabangId === id || (existingCabang.defaultEmail && u.email === existingCabang.defaultEmail)
+        );
+        if (matchedUser) {
+          const updatedUser = {
+            ...matchedUser,
+            name: fieldsToSave.name || matchedUser.name,
+            email: fieldsToSave.defaultEmail || fieldsToSave.email || matchedUser.email,
+            password: fieldsToSave.password || matchedUser.password,
+          };
+          try {
+            await updateRecord(accessToken || '', spreadsheetId, 'Users', matchedUser.id, updatedUser);
+          } catch (uErr) {
+            console.warn('Sync user account cabang failed:', uErr);
+          }
+        }
+      }
+    }
+
     try {
-      await updateRecord(accessToken || '', spreadsheetId, mappedTable, id, updatedFields);
+      await updateRecord(accessToken || '', spreadsheetId, mappedTable, id, fieldsToSave);
       await logActivity(`UPDATE_${mappedTable.toUpperCase()}`, `Mengubah record ${id}`);
       await syncData(accessToken || '', spreadsheetId);
     } catch (err: any) {
@@ -622,7 +660,7 @@ export default function App() {
         const next = {
           ...prev,
           [arrayKey]: ((prev as any)[arrayKey] || []).map((item: any) =>
-            (item.id || item.key) === id ? { ...item, ...updatedFields } : item
+            (item.id || item.key) === id ? { ...item, ...fieldsToSave } : item
           ),
         };
         localStorage.setItem('sim_offline_db', JSON.stringify(next));
@@ -1218,6 +1256,7 @@ export default function App() {
             onEdit={handleEditRecord}
             onDelete={handleDeleteRecord}
             onBulkDelete={handleBulkDeleteRecords}
+            onNavigateToTab={setCurrentTab}
           />
         )}
         </main>
