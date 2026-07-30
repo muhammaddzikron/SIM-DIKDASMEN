@@ -1277,7 +1277,7 @@ export default function CrudView({
     const headerLabels = Object.values(tableHeaders);
     
     const csvRows = [];
-    csvRows.push(headerLabels.join(',')); // Headers row
+    csvRows.push(headerLabels.join(';')); // Headers row separated by semicolon for Excel
     
     for (const item of filteredList) {
       const rowValues = headers.map(header => {
@@ -1302,7 +1302,7 @@ export default function CrudView({
         const escaped = stringVal.replace(/"/g, '""');
         return `"${escaped}"`;
       });
-      csvRows.push(rowValues.join(','));
+      csvRows.push(rowValues.join(';'));
     }
     
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.join('\n');
@@ -1315,30 +1315,345 @@ export default function CrudView({
     document.body.removeChild(link);
   };
 
-  // 10.3. Download CSV Template Helper
+  // 10.3. Download CSV Template Helper (Resmi per Kolom)
   const handleDownloadTemplate = () => {
     let templateContent = '';
     let filename = '';
+    const sep = ';';
+
     if (tableName === 'Sekolah') {
-      templateContent = 'name,npsn,username,password,cabang,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status,level,vision,mission,hasNib,nib,email,website,phone,accreditation,accreditationExpiryDate,categoryCapability,skPendirianNumber,skPendirianDate,skIzinOperasional,skIzinOperasionalDate,jumlahSiswaPerKelas,jumlahKeseluruhanSiswa,jumlahGtp,jumlahGttp,jumlahKeseluruhanGuru,jumlahKtp,jumlahKttp,jumlahKeseluruhanKaryawan,jumlahGuruSertifikasi,jumlahGuruInpassing,jumlahDpkPns,sosmed,operatorName,operatorPhone,curriculum,description\n' +
-        '"SD Muhammadiyah 1 Klaten",20309501,sdmuh1klaten,password,CAB-V,"Jl. Merbabu No.13 Klaten",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Swasta,SD,"Visi Sekolah...","Misi Sekolah...",Ya,12345678,sdmuh1klaten@sch.id,https://sdmuh1klaten.sch.id,(0272) 321520,A,2028-12-31,SEHAT,001/SK/2010,2010-01-01,002/IZIN/2010,2010-02-01,28,450,15,5,20,4,2,6,12,3,1,"IG: @sdmuh1klaten",Agus Susanto,08123456789,"Kurikulum Merdeka","Profil singkat sekolah..."\n';
+      const headers = [
+        'Nama Sekolah',
+        'NPSN',
+        'Username',
+        'Password',
+        'Pimpinan Cabang',
+        'Alamat Jalan Sekolah',
+        'RT / RW',
+        'Kode Pos',
+        'Kelurahan / Desa',
+        'Kecamatan',
+        'Kabupaten / Kota',
+        'Status Sekolah',
+        'Jenjang',
+        'Visi Sekolah',
+        'Misi Sekolah',
+        'Memiliki NIB',
+        'NIB',
+        'Email Sekolah',
+        'Website',
+        'Nomor Telepon',
+        'Akreditasi',
+        'Masa Berlaku Akreditasi',
+        'Kategori Perguruan',
+        'Nomor SK Pendirian',
+        'Tanggal SK Pendirian',
+        'Nomor SK Izin Operasional',
+        'Tanggal SK Izin Operasional',
+        'Jumlah Siswa Per Kelas',
+        'Jumlah Keseluruhan Siswa',
+        'Jumlah GTP',
+        'Jumlah GTTP',
+        'Jumlah Keseluruhan Guru',
+        'Jumlah KTP',
+        'Jumlah KTTP',
+        'Jumlah Keseluruhan Karyawan',
+        'Jumlah Guru Sertifikasi',
+        'Jumlah Guru Inpassing',
+        'Jumlah DPK PNS',
+        'Sosial Media',
+        'Nama Operator',
+        'HP Operator',
+        'Kurikulum',
+        'Deskripsi Profil'
+      ];
+      const row1 = [
+        '"SD Muhammadiyah 1 Klaten"',
+        '20309501',
+        'sdmuh1klaten',
+        'password123',
+        'CAB-V',
+        '"Jl. Merbabu No.13 Klaten"',
+        '001/002',
+        '57411',
+        'Gergunung',
+        'Klaten Utara',
+        'Kabupaten Klaten',
+        'Swasta',
+        'SD',
+        '"Terwujudnya sekolah islami, unggul, dan berkarakter"',
+        '"Menyelenggarakan pendidikan berkualitas berbasis Al-Islam dan Kemuhammadiyahan"',
+        'Ya',
+        '12345678',
+        'sdmuh1klaten@sch.id',
+        'https://sdmuh1klaten.sch.id',
+        '(0272) 321520',
+        'A',
+        '2028-12-31',
+        'SEHAT',
+        '001/SK/2010',
+        '2010-01-01',
+        '002/IZIN/2010',
+        '2010-02-01',
+        '28',
+        '450',
+        '15',
+        '5',
+        '20',
+        '4',
+        '2',
+        '6',
+        '12',
+        '3',
+        '1',
+        '"IG: @sdmuh1klaten"',
+        'Agus Susanto',
+        '08123456789',
+        '"Kurikulum Merdeka"',
+        '"Profil singkat SD Muhammadiyah 1 Klaten"'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n';
       filename = 'template_impor_sekolah.csv';
     } else if (tableName === 'Guru') {
-      templateContent = 'name,nipm,gender,pobDob,sekolah,status,guruType,subject,hasPpg,nuptk,nrg,nip,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
-        '"Eko Sulistyo, S.Pd",198205122009031005,Laki-laki,"Klaten, 15 Mei 1985",20309501,PNS,Guru Mata Pelajaran,Matematika,Sudah,1234567890123456,987654321,198205122009031005,1234567,001/SK/2020,2020-01-02,S1,Pendidikan Matematika,"Jl. Pemuda No. 12",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,08123456789,"Pemuda Muhammadiyah Cabang Klaten Utara"\n' +
-        '"Rina Rahmawati, S.Pd",199002142018022001,Perempuan,"Klaten, 20 Juni 1990",20309502,GTP,Guru Kelas,Guru Kelas III,Belum,2345678901234567,,2345678,002/SK/2021,2021-07-15,S1,PGSD,"Jl. Merbabu No. 88",003/001,57412,Buntalan,Klaten Tengah,Kabupaten Klaten,08234567890,"Aisyiyah Ranting Buntalan"\n';
+      const headers = [
+        'Nama Guru',
+        'NIPM',
+        'Jenis Kelamin',
+        'Tempat Tanggal Lahir',
+        'Sekolah (NPSN/Nama)',
+        'Status Kepegawaian',
+        'Jenis Guru',
+        'Mata Pelajaran',
+        'Sudah PPG',
+        'NUPTK',
+        'NRG',
+        'NIP',
+        'NBM',
+        'Nomor SK Pengangkatan',
+        'TMT Awal Pengangkatan',
+        'Pendidikan Terakhir',
+        'Prodi Pendidikan',
+        'Alamat Domisili',
+        'RT / RW',
+        'Kode Pos',
+        'Kelurahan / Desa',
+        'Kecamatan',
+        'Kabupaten / Kota',
+        'Nomor HP Aktif',
+        'Keaktifan di Persyarikatan'
+      ];
+      const row1 = [
+        '"Eko Sulistyo, S.Pd"',
+        '198205122009031005',
+        'Laki-laki',
+        '"Klaten, 15 Mei 1985"',
+        '20309501',
+        'PNS',
+        'Guru Mata Pelajaran',
+        'Matematika',
+        'Sudah',
+        '1234567890123456',
+        '987654321',
+        '198205122009031005',
+        '1234567',
+        '001/SK/2020',
+        '2020-01-02',
+        'S1',
+        'Pendidikan Matematika',
+        '"Jl. Pemuda No. 12"',
+        '001/002',
+        '57411',
+        'Gergunung',
+        'Klaten Utara',
+        'Kabupaten Klaten',
+        '08123456789',
+        '"Pemuda Muhammadiyah Cabang Klaten Utara"'
+      ];
+      const row2 = [
+        '"Rina Rahmawati, S.Pd"',
+        '199002142018022001',
+        'Perempuan',
+        '"Klaten, 20 Juni 1990"',
+        '20309502',
+        'GTP',
+        'Guru Kelas',
+        'Guru Kelas III',
+        'Belum',
+        '2345678901234567',
+        '',
+        '2345678',
+        '1234568',
+        '002/SK/2021',
+        '2021-07-15',
+        'S1',
+        'PGSD',
+        '"Jl. Merbabu No. 88"',
+        '003/001',
+        '57412',
+        'Buntalan',
+        'Klaten Tengah',
+        'Kabupaten Klaten',
+        '08234567890',
+        '"Aisyiyah Ranting Buntalan"'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n' + row2.join(sep) + '\n';
       filename = 'template_impor_guru.csv';
     } else if (tableName === 'TenagaKependidikan') {
-      templateContent = 'name,nipm,pobDob,gender,sekolah,status,position,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
-        '"Bambang Prasetyo, S.Kom",198504102010011008,"Boyolali, 10 April 1985",Laki-laki,20309501,PNS,"Staff Administrasi (TU)",1234568,005/SK/TU/2019,2019-03-01,S1,Teknik Informatika,"Jl. Veteran No. 4",002/004,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,08139876543,"KOKAM Klaten"\n' +
-        '"Dewi Lestari, A.Md",199208152020012015,"Klaten, 15 Agustus 1992",Perempuan,20309502,KTTP,Petugas Perpus,2345679,012/SK/TU/2022,2022-01-10,D3,Ilmu Perpustakaan,"Dusun Tegalsari",001/003,57414,Bareng,Klaten Utara,Kabupaten Klaten,08567890123,"Nasyiatul Aisyiyah"\n';
+      const headers = [
+        'Nama Karyawan',
+        'NIPM',
+        'Tempat Tanggal Lahir',
+        'Jenis Kelamin',
+        'Sekolah Tempat Bertugas',
+        'Status Karyawan',
+        'Jenis Karyawan / Jabatan',
+        'NBM',
+        'Nomor SK Pengangkatan',
+        'TMT Awal Pengangkatan',
+        'Pendidikan Terakhir',
+        'Prodi Pendidikan Terakhir',
+        'Alamat Domisili',
+        'RT / RW',
+        'Kode Pos',
+        'Kelurahan / Desa',
+        'Kecamatan',
+        'Kabupaten / Kota',
+        'Nomor HP Aktif',
+        'Keaktifan di Persyarikatan'
+      ];
+      const row1 = [
+        '"Bambang Prasetyo, S.Kom"',
+        '198504102010011008',
+        '"Boyolali, 10 April 1985"',
+        'Laki-laki',
+        '20309501',
+        'PNS',
+        '"Staff Administrasi (TU)"',
+        '1234568',
+        '005/SK/TU/2019',
+        '2019-03-01',
+        'S1',
+        'Teknik Informatika',
+        '"Jl. Veteran No. 4"',
+        '002/004',
+        '57413',
+        'Buntalan',
+        'Klaten Tengah',
+        'Kabupaten Klaten',
+        '08139876543',
+        '"KOKAM Klaten"'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n';
       filename = 'template_impor_tenaga_kependidikan.csv';
     } else if (tableName === 'Siswa') {
-      templateContent = 'name,gender,nisn,pobDob,sekolah,class,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status\n' +
-        'Andi Wijaya,Laki-laki,0081234567,"Klaten, 05 April 2012",20309501,XI-MIPA-1,"Jl. Merbabu No.10",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Aktif\n' +
-        'Siti Aminah,Perempuan,0098765432,"Klaten, 12 Agustus 2011",20309502,XII-IPS-2,"Jl. Pemuda No.45",002/003,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,Aktif\n';
+      const headers = [
+        'Nama Siswa',
+        'Jenis Kelamin',
+        'NISN',
+        'Tempat Tanggal Lahir',
+        'Sekolah (NPSN/Nama)',
+        'Kelas',
+        'Alamat Domisili',
+        'RT / RW',
+        'Kode Pos',
+        'Kelurahan / Desa',
+        'Kecamatan',
+        'Kabupaten / Kota',
+        'Status Siswa'
+      ];
+      const row1 = [
+        '"Andi Wijaya"',
+        'Laki-laki',
+        '0081234567',
+        '"Klaten, 05 April 2012"',
+        '20309501',
+        'XI-MIPA-1',
+        '"Jl. Merbabu No.10"',
+        '001/002',
+        '57411',
+        'Gergunung',
+        'Klaten Utara',
+        'Kabupaten Klaten',
+        'Aktif'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n';
       filename = 'template_impor_siswa.csv';
+    } else if (tableName === 'KepalaSekolah') {
+      const headers = [
+        'Nama Kepala Sekolah',
+        'NIPM',
+        'Jenis Kelamin',
+        'Tempat Tanggal Lahir',
+        'Sekolah (NPSN/Nama)',
+        'Status',
+        'NUPTK',
+        'NIP',
+        'NBM',
+        'Nomor SK Pengangkatan',
+        'TMT Awal Pengangkatan',
+        'Pendidikan Terakhir',
+        'Prodi Pendidikan',
+        'Alamat Domisili',
+        'RT / RW',
+        'Kode Pos',
+        'Kelurahan / Desa',
+        'Kecamatan',
+        'Kabupaten / Kota',
+        'Nomor HP Aktif',
+        'Keaktifan di Persyarikatan'
+      ];
+      const row1 = [
+        '"Drs. H. Ahmad Dahlan, M.Pd"',
+        '197501012005011002',
+        'Laki-laki',
+        '"Klaten, 01 Januari 1975"',
+        '20309501',
+        'KTP',
+        '1234567890123456',
+        '197501012005011002',
+        '1234500',
+        '001/SK-KS/2021',
+        '2021-01-01',
+        'S2',
+        'Manajemen Pendidikan',
+        '"Jl. Pemuda No. 100"',
+        '001/001',
+        '57411',
+        'Tonggalan',
+        'Klaten Tengah',
+        'Kabupaten Klaten',
+        '081234567000',
+        '"PDM Klaten"'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n';
+      filename = 'template_impor_kepala_sekolah.csv';
+    } else {
+      const headers = [
+        'Nama Pegawai',
+        'Jenis SK',
+        'Nomor SK',
+        'Tanggal SK',
+        'TMT SK',
+        'Masa Berlaku',
+        'Sekolah (NPSN/Nama)',
+        'Keterangan',
+        'Status SK'
+      ];
+      const row1 = [
+        '"Eko Sulistyo, S.Pd"',
+        'SK Guru Tetap Persyarikatan',
+        '123/SK-GURU/DIKDASMEN/2024',
+        '2024-01-10',
+        '2024-01-01',
+        '2028-01-01',
+        '20309501',
+        '"Pengangkatan Guru Tetap"',
+        'Terbit'
+      ];
+      templateContent = headers.join(sep) + '\n' + row1.join(sep) + '\n';
+      filename = `template_impor_${tableName.toLowerCase()}.csv`;
     }
+
     const blob = new Blob(['\uFEFF' + templateContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1349,7 +1664,7 @@ export default function CrudView({
     document.body.removeChild(link);
   };
 
-  // 10.4. Parse & Import CSV
+  // 10.4. Parse & Import CSV (Delimiter Auto-detect & Smart Field Matching)
   const handleImportCSV = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
@@ -1363,23 +1678,44 @@ export default function CrudView({
         const text = evt.target?.result as string;
         if (!text) throw new Error('File kosong atau rusak.');
 
-        const lines = text.split(/\r?\n/);
-        if (lines.length < 2) throw new Error('File tidak memiliki baris data.');
+        const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+        if (rawLines.length < 2) throw new Error('File tidak memiliki baris data.');
 
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
-        
-        const recordsToImport: any[] = [];
-        const logs: string[] = [];
+        let startLineIdx = 0;
+        let delimiter = ',';
 
-        const parseCSVLine = (line: string) => {
-          const result = [];
+        if (rawLines[0].toLowerCase().startsWith('sep=')) {
+          delimiter = rawLines[0].substring(4).trim() || ';';
+          startLineIdx = 1;
+        } else {
+          const firstLine = rawLines[0];
+          const countSemicolon = (firstLine.match(/;/g) || []).length;
+          const countComma = (firstLine.match(/,/g) || []).length;
+          const countTab = (firstLine.match(/\t/g) || []).length;
+
+          if (countSemicolon >= countComma && countSemicolon >= countTab && countSemicolon > 0) {
+            delimiter = ';';
+          } else if (countTab > countComma && countTab > 0) {
+            delimiter = '\t';
+          } else {
+            delimiter = ',';
+          }
+        }
+
+        const parseCSVLine = (line: string, delim: string) => {
+          const result: string[] = [];
           let current = '';
           let inQuotes = false;
           for (let i = 0; i < line.length; i++) {
             const char = line[i];
             if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
+              if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === delim && !inQuotes) {
               result.push(current.trim().replace(/^["']|["']$/g, ''));
               current = '';
             } else {
@@ -1390,11 +1726,17 @@ export default function CrudView({
           return result;
         };
 
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
+        const headerLine = rawLines[startLineIdx];
+        const headers = parseCSVLine(headerLine, delimiter).map(h => h.trim().toLowerCase());
+
+        const recordsToImport: any[] = [];
+        const logs: string[] = [];
+
+        for (let i = startLineIdx + 1; i < rawLines.length; i++) {
+          const line = rawLines[i];
           if (!line) continue;
 
-          const values = parseCSVLine(line);
+          const values = parseCSVLine(line, delimiter);
           const record: Record<string, any> = {};
 
           headers.forEach((header, index) => {
@@ -1414,13 +1756,13 @@ export default function CrudView({
             } else if (['nuptk'].includes(h)) record['nuptk'] = val;
             else if (['nrg'].includes(h)) record['nrg'] = val;
             else if (['nbm'].includes(h)) record['nbm'] = val;
-            else if (['nama', 'name', 'namaguru', 'namasiswa', 'namakaryawan', 'namatendik', 'namalengkap'].includes(h)) record['name'] = val;
+            else if (['nama', 'name', 'namaguru', 'namasiswa', 'namakaryawan', 'namatendik', 'namalengkap', 'namasekolah', 'namagurudk', 'namakepalasekolah', 'namapegawai'].includes(h)) record['name'] = val;
             else if (['pobdob', 'tempattanggallahir', 'pob_dob', 'ttl', 'tempattgllahir'].includes(h)) record['pobDob'] = val;
             else if (['gender', 'jeniskelamin', 'jk'].includes(h)) {
               if (val.toLowerCase().startsWith('l')) record['gender'] = 'Laki-laki';
               else if (val.toLowerCase().startsWith('p')) record['gender'] = 'Perempuan';
               else record['gender'] = val;
-            } else if (['sekolah', 'schoolid', 'namasekolah', 'sekolahbertugas', 'npsnsekolah'].includes(h)) {
+            } else if (['sekolah', 'schoolid', 'namasekolah', 'sekolahbertauzgas', 'sekolahtempatbertugas', 'npsnsekolah', 'sekolahnpsnnama'].includes(h)) {
               const matched = data.sekolah.find(s => 
                 s.id === val || 
                 s.npsn === val || 
@@ -1437,55 +1779,54 @@ export default function CrudView({
               );
               record['cabangId'] = matched ? matched.id : val;
             } else if (['kelas', 'class'].includes(h)) record['class'] = val;
-            else if (['status', 'statusguru', 'statuskaryawan', 'statussiswa', 'statuskepegawaian'].includes(h)) record['status'] = val;
-            else if (['gurutype', 'jenisguru', 'tipeguru'].includes(h)) record['guruType'] = val;
-            else if (['subject', 'mapel', 'matapelajaran', 'detailkelas'].includes(h)) record['subject'] = val;
+            else if (['status', 'statusguru', 'statuskaryawan', 'statussiswa', 'statussekolah', 'statuskepegawaian', 'statussk'].includes(h)) record['status'] = val;
+            else if (['gurutype', 'jenisguru', 'tipeguru', 'jenisgurutugas'].includes(h)) record['guruType'] = val;
+            else if (['subject', 'mapel', 'matapelajaran', 'detailkelas', 'matapelasarandetailkelas'].includes(h)) record['subject'] = val;
             else if (['position', 'jabatan', 'jeniskaryawan', 'tugas', 'jeniskaryawanjabatan'].includes(h)) record['position'] = val;
             else if (['hasppg', 'ppg', 'sudahppg', 'statusppg'].includes(h)) record['hasPpg'] = val;
             else if (['sknumber', 'nomorsk', 'nosk', 'skpengangkatan', 'nomorskpengangkatan'].includes(h)) record['skNumber'] = val;
             else if (['tmbawal', 'tmtawal', 'tmtpengangkatan', 'tmt', 'tmtawalpengangkatan'].includes(h)) record['tmtAwal'] = val;
             else if (['education', 'pendidikan', 'pendidikanterakhir'].includes(h)) record['education'] = val;
             else if (['educationprodi', 'prodi', 'jurusan', 'prodipendidikanterakhir', 'prodipendidikan'].includes(h)) record['educationProdi'] = val;
-            else if (['address', 'alamat', 'domisili', 'alamatdomisili'].includes(h)) record['address'] = val;
+            else if (['address', 'alamat', 'domisili', 'alamatdomisili', 'alamatjalan', 'alamatjalansekolah'].includes(h)) record['address'] = val;
             else if (['rtrw', 'rt_rw', 'rt/rw', 'rt', 'rw'].includes(h)) record['rtRw'] = val;
             else if (['postalcode', 'kodepos', 'pos'].includes(h)) record['postalCode'] = val;
             else if (['kelurahan', 'desa', 'kelurahandesa'].includes(h)) record['kelurahan'] = val;
             else if (['kecamatan'].includes(h)) record['kecamatan'] = val;
             else if (['kabupatenkota', 'kabupaten', 'kota'].includes(h)) record['kabupatenKota'] = val;
-            else if (['phone', 'nohp', 'telepon', 'hp', 'nomorhp', 'nohpaktif'].includes(h)) record['phone'] = val;
+            else if (['phone', 'nohp', 'telepon', 'hp', 'nomorhp', 'nohpaktif', 'nomortelepon'].includes(h)) record['phone'] = val;
             else if (['persyarikatanactivity', 'keaktifanpersyarikatan', 'persyarikatan', 'ortom', 'keaktifandipersyarikatan'].includes(h)) record['persyarikatanActivity'] = val;
             else if (['jenjang', 'level'].includes(h)) record['level'] = val;
             else if (['accreditation', 'akreditasi'].includes(h)) record['accreditation'] = val;
             else if (['categorycapability', 'kategori', 'kategoriperguruan'].includes(h)) record['categoryCapability'] = val;
-            else if (['subdistrict', 'kecamatansekolah'].includes(h)) record['subdistrict'] = val;
             else if (['email', 'emailsekolah'].includes(h)) record['email'] = val;
             else if (['website', 'web'].includes(h)) record['website'] = val;
             else if (['username', 'usernamelogin'].includes(h)) record['username'] = val;
             else if (['password', 'passwordlogin'].includes(h)) record['password'] = val;
-            else if (['hasnib', 'nibstatus'].includes(h)) record['hasNib'] = val;
+            else if (['hasnib', 'memilikinib', 'nibstatus'].includes(h)) record['hasNib'] = val;
             else if (['nib'].includes(h)) record['nib'] = val;
             else if (['skpendiriannumber', 'nomorskpendirian'].includes(h)) record['skPendirianNumber'] = val;
             else if (['skpendiriandate', 'tanggalskpendirian'].includes(h)) record['skPendirianDate'] = val;
             else if (['skizinoperasional', 'nomorskizinoperasional'].includes(h)) record['skIzinOperasional'] = val;
             else if (['skizinoperasionaldate', 'tanggalskizinoperasional'].includes(h)) record['skIzinOperasionalDate'] = val;
-            else if (['jumlahsiswaperkelas'].includes(h)) record['jumlahSiswaPerKelas'] = val;
+            else if (['jumlahsiswaperkelas', 'siswaperkelas'].includes(h)) record['jumlahSiswaPerKelas'] = val;
             else if (['jumlahkeseluruhansiswa'].includes(h)) record['jumlahKeseluruhanSiswa'] = val;
-            else if (['jumlahgtp'].includes(h)) record['jumlahGtp'] = val;
-            else if (['jumlahgttp'].includes(h)) record['jumlahGttp'] = val;
+            else if (['jumlahgtp', 'gtp'].includes(h)) record['jumlahGtp'] = val;
+            else if (['jumlahgttp', 'gttp'].includes(h)) record['jumlahGttp'] = val;
             else if (['jumlahkeseluruhanguru'].includes(h)) record['jumlahKeseluruhanGuru'] = val;
-            else if (['jumlahktp'].includes(h)) record['jumlahKtp'] = val;
-            else if (['jumlahkttp'].includes(h)) record['jumlahKttp'] = val;
+            else if (['jumlahktp', 'ktp'].includes(h)) record['jumlahKtp'] = val;
+            else if (['jumlahkttp', 'kttp'].includes(h)) record['jumlahKttp'] = val;
             else if (['jumlahkeseluruhankaryawan'].includes(h)) record['jumlahKeseluruhanKaryawan'] = val;
-            else if (['jumlahgurusertifikasi'].includes(h)) record['jumlahGuruSertifikasi'] = val;
-            else if (['jumlahguruinpassing'].includes(h)) record['jumlahGuruInpassing'] = val;
-            else if (['jumlahdpkpns'].includes(h)) record['jumlahDpkPns'] = val;
+            else if (['jumlahgurusertifikasi', 'gurusertifikasi'].includes(h)) record['jumlahGuruSertifikasi'] = val;
+            else if (['jumlahguruinpassing', 'guruinpassing'].includes(h)) record['jumlahGuruInpassing'] = val;
+            else if (['jumlahdpkpns', 'dpkpns'].includes(h)) record['jumlahDpkPns'] = val;
             else if (['sosmed', 'sosialmedia'].includes(h)) record['sosmed'] = val;
-            else if (['operatorname', 'namaoperator', 'operator'].includes(h)) record['operatorName'] = val;
+            else if (['operatorname', 'namaoperator'].includes(h)) record['operatorName'] = val;
             else if (['operatorphone', 'hpoperator', 'nohpoperator'].includes(h)) record['operatorPhone'] = val;
             else if (['curriculum', 'kurikulum'].includes(h)) record['curriculum'] = val;
-            else if (['vision', 'visi'].includes(h)) record['vision'] = val;
-            else if (['mission', 'misi'].includes(h)) record['mission'] = val;
-            else if (['description', 'deskripsi', 'profil'].includes(h)) record['description'] = val;
+            else if (['vision', 'visi', 'visisekolah'].includes(h)) record['vision'] = val;
+            else if (['mission', 'misi', 'misisekolah'].includes(h)) record['mission'] = val;
+            else if (['description', 'deskripsi', 'deskripsiprofil', 'profil'].includes(h)) record['description'] = val;
             else {
               record[header] = val;
             }
