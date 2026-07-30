@@ -26,6 +26,39 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { uploadFileToDrive } from '../lib/drive';
+import {
+  JAWA_TENGAH_KABUPATEN,
+  KLATEN_KECAMATAN_LIST,
+  KLATEN_KECAMATAN_MAP,
+} from '../data/klatenRegions';
+
+const getKecamatanOptions = (kabupatenKota?: string, currentVal?: string) => {
+  if (kabupatenKota === 'Kabupaten Klaten' || !kabupatenKota) {
+    const opts = KLATEN_KECAMATAN_LIST.map((k) => ({ value: k, label: k }));
+    if (currentVal && !KLATEN_KECAMATAN_LIST.includes(currentVal)) {
+      opts.unshift({ value: currentVal, label: currentVal });
+    }
+    return opts;
+  }
+  return currentVal
+    ? [{ value: currentVal, label: currentVal }]
+    : [{ value: '', label: '-- Pilih / Isi Kecamatan --' }];
+};
+
+const getKelurahanOptions = (kecamatan?: string, currentVal?: string) => {
+  const kec = kecamatan || 'Klaten Tengah';
+  const desas = KLATEN_KECAMATAN_MAP[kec];
+  if (desas) {
+    const opts = desas.map((d) => ({ value: d.name, label: d.name }));
+    if (currentVal && !desas.some((d) => d.name === currentVal)) {
+      opts.unshift({ value: currentVal, label: currentVal });
+    }
+    return opts;
+  }
+  return currentVal
+    ? [{ value: currentVal, label: currentVal }]
+    : [{ value: '', label: '-- Pilih / Isi Kelurahan --' }];
+};
 
 interface CrudViewProps {
   tableName: TableName;
@@ -233,10 +266,28 @@ export default function CrudView({
           },
           { name: 'address', label: 'Alamat Jalan Sekolah/Madrasah', type: 'textarea', placeholder: 'Jl. Pemuda No...', required: true },
           { name: 'rtRw', label: 'RT / RW', type: 'text', placeholder: 'Misal: 002 / 005' },
-          { name: 'postalCode', label: 'Kode Pos', type: 'text', placeholder: 'Misal: 57411' },
-          { name: 'kelurahan', label: 'Kelurahan / Desa', type: 'text', placeholder: 'Misal: Tonggalan' },
-          { name: 'kecamatan', label: 'Kecamatan', type: 'text', placeholder: 'Misal: Klaten Tengah' },
-          { name: 'kabupatenKota', label: 'Kabupaten / Kota', type: 'text', placeholder: 'Misal: Kabupaten Klaten' },
+          {
+            name: 'kabupatenKota',
+            label: 'Kabupaten / Kota (Se-Jawa Tengah)',
+            type: 'select',
+            required: true,
+            options: JAWA_TENGAH_KABUPATEN.map((k) => ({ value: k, label: k })),
+          },
+          {
+            name: 'kecamatan',
+            label: 'Kecamatan (Kabupaten Klaten)',
+            type: 'select',
+            required: true,
+            options: getKecamatanOptions(formData.kabupatenKota, formData.kecamatan),
+          },
+          {
+            name: 'kelurahan',
+            label: 'Kelurahan / Desa',
+            type: 'select',
+            required: true,
+            options: getKelurahanOptions(formData.kecamatan, formData.kelurahan),
+          },
+          { name: 'postalCode', label: 'Kode Pos (Otomatis)', type: 'text', placeholder: 'Misal: 57411' },
           {
             name: 'status',
             label: 'Status Sekolah',
@@ -411,10 +462,25 @@ export default function CrudView({
           { name: 'educationProdi', label: 'Prodi Pendidikan Terakhir', type: 'text', placeholder: 'Misal: Pendidikan Bahasa Indonesia' },
           { name: 'address', label: 'Alamat Domisili (Jalan / Dusun)', type: 'textarea', placeholder: 'Tuliskan alamat domisili...' },
           { name: 'rtRw', label: 'RT / RW', type: 'text', placeholder: 'Misal: 001 / 003' },
-          { name: 'postalCode', label: 'Kode Pos', type: 'text', placeholder: 'Misal: 57412' },
-          { name: 'kelurahan', label: 'Kelurahan', type: 'text', placeholder: 'Misal: Gergunung' },
-          { name: 'kecamatan', label: 'Kecamatan', type: 'text', placeholder: 'Misal: Klaten Utara' },
-          { name: 'kabupatenKota', label: 'Kabupaten / Kota', type: 'text', placeholder: 'Misal: Kabupaten Klaten' },
+          {
+            name: 'kabupatenKota',
+            label: 'Kabupaten / Kota',
+            type: 'select',
+            options: JAWA_TENGAH_KABUPATEN.map((k) => ({ value: k, label: k })),
+          },
+          {
+            name: 'kecamatan',
+            label: 'Kecamatan',
+            type: 'select',
+            options: getKecamatanOptions(formData.kabupatenKota, formData.kecamatan),
+          },
+          {
+            name: 'kelurahan',
+            label: 'Kelurahan / Desa',
+            type: 'select',
+            options: getKelurahanOptions(formData.kecamatan, formData.kelurahan),
+          },
+          { name: 'postalCode', label: 'Kode Pos (Otomatis)', type: 'text', placeholder: 'Misal: 57412' },
           { name: 'phone', label: 'Nomor HP Aktif', type: 'text', placeholder: '08123456789' },
           {
             name: 'persyarikatanActivity',
@@ -495,10 +561,25 @@ export default function CrudView({
           { name: 'educationProdi', label: 'Prodi Pendidikan Terakhir', type: 'text', placeholder: 'Misal: Manajemen / Informatika / IPA' },
           { name: 'address', label: 'Alamat Domisili (Jalan / Dusun)', type: 'textarea', placeholder: 'Tuliskan alamat domisili...' },
           { name: 'rtRw', label: 'RT / RW', type: 'text', placeholder: 'Misal: 002 / 004' },
-          { name: 'postalCode', label: 'Kode Pos', type: 'text', placeholder: 'Misal: 57413' },
-          { name: 'kelurahan', label: 'Kelurahan', type: 'text', placeholder: 'Misal: Buntalan' },
-          { name: 'kecamatan', label: 'Kecamatan', type: 'text', placeholder: 'Misal: Klaten Tengah' },
-          { name: 'kabupatenKota', label: 'Kabupaten / Kota', type: 'text', placeholder: 'Misal: Kabupaten Klaten' },
+          {
+            name: 'kabupatenKota',
+            label: 'Kabupaten / Kota',
+            type: 'select',
+            options: JAWA_TENGAH_KABUPATEN.map((k) => ({ value: k, label: k })),
+          },
+          {
+            name: 'kecamatan',
+            label: 'Kecamatan',
+            type: 'select',
+            options: getKecamatanOptions(formData.kabupatenKota, formData.kecamatan),
+          },
+          {
+            name: 'kelurahan',
+            label: 'Kelurahan / Desa',
+            type: 'select',
+            options: getKelurahanOptions(formData.kecamatan, formData.kelurahan),
+          },
+          { name: 'postalCode', label: 'Kode Pos (Otomatis)', type: 'text', placeholder: 'Misal: 57413' },
           { name: 'phone', label: 'Nomor HP', type: 'text', placeholder: '08123456789' },
           {
             name: 'persyarikatanActivity',
@@ -576,10 +657,25 @@ export default function CrudView({
           { name: 'class', label: 'Kelas', type: 'text', placeholder: 'Misal: VII-A, X-MIPA-1...', required: true },
           { name: 'address', label: 'Alamat Domisili (Jalan / Dusun)', type: 'textarea', placeholder: 'Tuliskan alamat domisili...' },
           { name: 'rtRw', label: 'RT / RW', type: 'text', placeholder: 'Misal: 001 / 002' },
-          { name: 'postalCode', label: 'Kode Pos', type: 'text', placeholder: 'Misal: 57411' },
-          { name: 'kelurahan', label: 'Kelurahan / Desa', type: 'text', placeholder: 'Kelurahan...' },
-          { name: 'kecamatan', label: 'Kecamatan', type: 'text', placeholder: 'Kecamatan...' },
-          { name: 'kabupatenKota', label: 'Kabupaten / Kota', type: 'text', placeholder: 'Kabupaten / Kota...' },
+          {
+            name: 'kabupatenKota',
+            label: 'Kabupaten / Kota',
+            type: 'select',
+            options: JAWA_TENGAH_KABUPATEN.map((k) => ({ value: k, label: k })),
+          },
+          {
+            name: 'kecamatan',
+            label: 'Kecamatan',
+            type: 'select',
+            options: getKecamatanOptions(formData.kabupatenKota, formData.kecamatan),
+          },
+          {
+            name: 'kelurahan',
+            label: 'Kelurahan / Desa',
+            type: 'select',
+            options: getKelurahanOptions(formData.kecamatan, formData.kelurahan),
+          },
+          { name: 'postalCode', label: 'Kode Pos (Otomatis)', type: 'text', placeholder: 'Misal: 57411' },
           {
             name: 'status',
             label: 'Status Siswa',
@@ -761,7 +857,19 @@ export default function CrudView({
       default:
         return [];
     }
-  }, [tableName, data]);
+  }, [
+    tableName,
+    data,
+    formData.kabupatenKota,
+    formData.kecamatan,
+    formData.kelurahan,
+    availableCabang,
+    availableSekolah,
+    availableGuru,
+    availableTendik,
+    availableKepalaSekolah,
+    userRole,
+  ]);
 
   // 2. Data Filtering based on Role-Based Access Controls
   const allScopedList = useMemo(() => {
@@ -913,6 +1021,19 @@ export default function CrudView({
       }
     });
 
+    if (tableName === 'Sekolah') {
+      defaults.status = 'Swasta'; // Status sekolah default swasta bukan negeri
+      defaults.kabupatenKota = 'Kabupaten Klaten';
+      defaults.kecamatan = 'Klaten Tengah';
+      defaults.kelurahan = 'Tonggalan';
+      defaults.postalCode = '57411';
+    } else if (['Guru', 'TenagaKependidikan', 'Siswa', 'KepalaSekolah'].includes(tableName)) {
+      defaults.kabupatenKota = 'Kabupaten Klaten';
+      defaults.kecamatan = 'Klaten Tengah';
+      defaults.kelurahan = 'Tonggalan';
+      defaults.postalCode = '57411';
+    }
+
     if (['SKGuru', 'SKTenagaKependidikan', 'SKKepalaSekolah'].includes(tableName)) {
       defaults.submissionType = 'Baru';
       defaults.status = 'Belum Terbit';
@@ -945,9 +1066,45 @@ export default function CrudView({
     setIsModalOpen(true);
   };
 
-  // 7. Form Field Changes
+  // 7. Form Field Changes with Location Cascading
   const handleInputChange = (name: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      if (name === 'kabupatenKota') {
+        if (value === 'Kabupaten Klaten') {
+          const kec = updated.kecamatan && KLATEN_KECAMATAN_MAP[updated.kecamatan] ? updated.kecamatan : 'Klaten Tengah';
+          updated.kecamatan = kec;
+          const desas = KLATEN_KECAMATAN_MAP[kec];
+          if (desas && desas.length > 0) {
+            updated.kelurahan = desas[0].name;
+            updated.postalCode = desas[0].postalCode;
+          }
+        }
+      } else if (name === 'kecamatan') {
+        if (updated.kabupatenKota === 'Kabupaten Klaten' || !updated.kabupatenKota) {
+          if (KLATEN_KECAMATAN_MAP[value]) {
+            const desas = KLATEN_KECAMATAN_MAP[value];
+            if (desas && desas.length > 0) {
+              updated.kelurahan = desas[0].name;
+              updated.postalCode = desas[0].postalCode;
+            }
+          }
+        }
+      } else if (name === 'kelurahan') {
+        const kec = updated.kecamatan || 'Klaten Tengah';
+        if (KLATEN_KECAMATAN_MAP[kec]) {
+          const matchedDesa = KLATEN_KECAMATAN_MAP[kec].find(
+            (d) => d.name === value
+          );
+          if (matchedDesa) {
+            updated.postalCode = matchedDesa.postalCode;
+          }
+        }
+      }
+
+      return updated;
+    });
   };
 
   // Helper for Uploading SK Attachments (NBM, Ijazah Terakhir, SK Lama)
@@ -1163,27 +1320,26 @@ export default function CrudView({
     let templateContent = '';
     let filename = '';
     if (tableName === 'Sekolah') {
-      templateContent = 'npsn,name,level,status,address,subdistrict,accreditation,categoryCapability,phone,email,operatorName,operatorPhone\n' +
-        '20309501,SMAN 1 Klaten,SMA,Negeri,"Jl. Merbabu No.13 Klaten",Klaten Utara,A,RAWAT INAP,(0272) 321520,sman1klaten@sch.id,Agus Susanto,08123456789\n' +
-        '20309502,SMA Muhammadiyah 1 Klaten,SMA,Swasta,"Jl. Pemuda No.120 Klaten",Klaten Tengah,Unggul,SEHAT,(0272) 321521,smamuh1klaten@sch.id,Budi Hendro,082198765432\n';
+      templateContent = 'name,npsn,username,password,cabang,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status,level,vision,mission,hasNib,nib,email,website,phone,accreditation,accreditationExpiryDate,categoryCapability,skPendirianNumber,skPendirianDate,skIzinOperasional,skIzinOperasionalDate,jumlahSiswaPerKelas,jumlahKeseluruhanSiswa,jumlahGtp,jumlahGttp,jumlahKeseluruhanGuru,jumlahKtp,jumlahKttp,jumlahKeseluruhanKaryawan,jumlahGuruSertifikasi,jumlahGuruInpassing,jumlahDpkPns,sosmed,operatorName,operatorPhone,curriculum,description\n' +
+        '"SD Muhammadiyah 1 Klaten",20309501,sdmuh1klaten,password,CAB-V,"Jl. Merbabu No.13 Klaten",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Swasta,SD,"Visi Sekolah...","Misi Sekolah...",Ya,12345678,sdmuh1klaten@sch.id,https://sdmuh1klaten.sch.id,(0272) 321520,A,2028-12-31,SEHAT,001/SK/2010,2010-01-01,002/IZIN/2010,2010-02-01,28,450,15,5,20,4,2,6,12,3,1,"IG: @sdmuh1klaten",Agus Susanto,08123456789,"Kurikulum Merdeka","Profil singkat sekolah..."\n';
       filename = 'template_impor_sekolah.csv';
     } else if (tableName === 'Guru') {
-      templateContent = 'nipm,name,gender,pobDob,sekolah,status,guruType,subject,hasPpg,nuptk,nrg,nip,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
-        '198205122009031005,"Eko Sulistyo, S.Pd",Laki-laki,"Klaten, 15 Mei 1985",SMAN 1 Klaten,PNS,Guru Mata Pelajaran,Matematika,Sudah,1234567890123456,987654321,198205122009031005,1234567,001/SK/2020,2020-01-02,S1,Pendidikan Matematika,"Jl. Pemuda No. 12",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,08123456789,"Pemuda Muhammadiyah Cabang Klaten Utara"\n' +
-        '199002142018022001,"Rina Rahmawati, S.Pd",Perempuan,"Klaten, 20 Juni 1990",SMA Muhammadiyah 1 Klaten,GTP,Guru Kelas,Guru Kelas III,Belum,2345678901234567,,2345678,002/SK/2021,2021-07-15,S1,PGSD,"Jl. Merbabu No. 88",003/001,57412,Buntalan,Klaten Tengah,Kabupaten Klaten,08234567890,"Aisyiyah Ranting Buntalan"\n';
+      templateContent = 'name,nipm,gender,pobDob,sekolah,status,guruType,subject,hasPpg,nuptk,nrg,nip,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
+        '"Eko Sulistyo, S.Pd",198205122009031005,Laki-laki,"Klaten, 15 Mei 1985",20309501,PNS,Guru Mata Pelajaran,Matematika,Sudah,1234567890123456,987654321,198205122009031005,1234567,001/SK/2020,2020-01-02,S1,Pendidikan Matematika,"Jl. Pemuda No. 12",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,08123456789,"Pemuda Muhammadiyah Cabang Klaten Utara"\n' +
+        '"Rina Rahmawati, S.Pd",199002142018022001,Perempuan,"Klaten, 20 Juni 1990",20309502,GTP,Guru Kelas,Guru Kelas III,Belum,2345678901234567,,2345678,002/SK/2021,2021-07-15,S1,PGSD,"Jl. Merbabu No. 88",003/001,57412,Buntalan,Klaten Tengah,Kabupaten Klaten,08234567890,"Aisyiyah Ranting Buntalan"\n';
       filename = 'template_impor_guru.csv';
     } else if (tableName === 'TenagaKependidikan') {
-      templateContent = 'nipm,name,gender,pobDob,sekolah,status,position,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
-        '198504102010011008,"Bambang Prasetyo, S.Kom",Laki-laki,"Boyolali, 10 April 1985",SMAN 1 Klaten,PNS,"Staff Administrasi (TU)",1234568,005/SK/TU/2019,2019-03-01,S1,Teknik Informatika,"Jl. Veteran No. 4",002/004,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,08139876543,"KOKAM Klaten"\n' +
-        '199208152020012015,"Dewi Lestari, A.Md",Perempuan,"Klaten, 15 Agustus 1992",SMA Muhammadiyah 1 Klaten,KTTP,Petugas Perpus,2345679,012/SK/TU/2022,2022-01-10,D3,Ilmu Perpustakaan,"Dusun Tegalsari",001/003,57414,Bareng,Klaten Utara,Kabupaten Klaten,08567890123,"Nasyiatul Aisyiyah"\n';
+      templateContent = 'name,nipm,pobDob,gender,sekolah,status,position,nbm,skNumber,tmtAwal,education,educationProdi,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,phone,persyarikatanActivity\n' +
+        '"Bambang Prasetyo, S.Kom",198504102010011008,"Boyolali, 10 April 1985",Laki-laki,20309501,PNS,"Staff Administrasi (TU)",1234568,005/SK/TU/2019,2019-03-01,S1,Teknik Informatika,"Jl. Veteran No. 4",002/004,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,08139876543,"KOKAM Klaten"\n' +
+        '"Dewi Lestari, A.Md",199208152020012015,"Klaten, 15 Agustus 1992",Perempuan,20309502,KTTP,Petugas Perpus,2345679,012/SK/TU/2022,2022-01-10,D3,Ilmu Perpustakaan,"Dusun Tegalsari",001/003,57414,Bareng,Klaten Utara,Kabupaten Klaten,08567890123,"Nasyiatul Aisyiyah"\n';
       filename = 'template_impor_tenaga_kependidikan.csv';
     } else if (tableName === 'Siswa') {
-      templateContent = 'nisn,name,gender,pobDob,sekolah,class,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status\n' +
-        '0081234567,Andi Wijaya,Laki-laki,"Klaten, 05 April 2012",SMAN 1 Klaten,XI-MIPA-1,"Jl. Merbabu No.10",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Aktif\n' +
-        '0098765432,Siti Aminah,Perempuan,"Klaten, 12 Agustus 2011",SMA Muhammadiyah 1 Klaten,XII-IPS-2,"Jl. Pemuda No.45",002/003,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,Aktif\n';
+      templateContent = 'name,gender,nisn,pobDob,sekolah,class,address,rtRw,postalCode,kelurahan,kecamatan,kabupatenKota,status\n' +
+        'Andi Wijaya,Laki-laki,0081234567,"Klaten, 05 April 2012",20309501,XI-MIPA-1,"Jl. Merbabu No.10",001/002,57411,Gergunung,Klaten Utara,Kabupaten Klaten,Aktif\n' +
+        'Siti Aminah,Perempuan,0098765432,"Klaten, 12 Agustus 2011",20309502,XII-IPS-2,"Jl. Pemuda No.45",002/003,57413,Buntalan,Klaten Tengah,Kabupaten Klaten,Aktif\n';
       filename = 'template_impor_siswa.csv';
     }
-    const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + templateContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -1258,13 +1414,13 @@ export default function CrudView({
             } else if (['nuptk'].includes(h)) record['nuptk'] = val;
             else if (['nrg'].includes(h)) record['nrg'] = val;
             else if (['nbm'].includes(h)) record['nbm'] = val;
-            else if (['nama', 'name', 'namaguru', 'namasiswa', 'namakaryawan', 'namatendik'].includes(h)) record['name'] = val;
-            else if (['pobdob', 'tempattanggallahir', 'pob_dob', 'ttl'].includes(h)) record['pobDob'] = val;
+            else if (['nama', 'name', 'namaguru', 'namasiswa', 'namakaryawan', 'namatendik', 'namalengkap'].includes(h)) record['name'] = val;
+            else if (['pobdob', 'tempattanggallahir', 'pob_dob', 'ttl', 'tempattgllahir'].includes(h)) record['pobDob'] = val;
             else if (['gender', 'jeniskelamin', 'jk'].includes(h)) {
               if (val.toLowerCase().startsWith('l')) record['gender'] = 'Laki-laki';
               else if (val.toLowerCase().startsWith('p')) record['gender'] = 'Perempuan';
               else record['gender'] = val;
-            } else if (['sekolah', 'schoolid', 'namasekolah', 'sekolahbertugas'].includes(h)) {
+            } else if (['sekolah', 'schoolid', 'namasekolah', 'sekolahbertugas', 'npsnsekolah'].includes(h)) {
               const matched = data.sekolah.find(s => 
                 s.id === val || 
                 s.npsn === val || 
@@ -1273,31 +1429,63 @@ export default function CrudView({
                 val.toLowerCase().includes(s.name.toLowerCase())
               );
               record['schoolId'] = matched ? matched.id : val;
+            } else if (['cabang', 'cabangid', 'pimpinancabang'].includes(h)) {
+              const matched = data.cabang.find(c => 
+                c.id === val || 
+                c.code.toLowerCase() === val.toLowerCase() ||
+                c.name.toLowerCase().includes(val.toLowerCase())
+              );
+              record['cabangId'] = matched ? matched.id : val;
             } else if (['kelas', 'class'].includes(h)) record['class'] = val;
-            else if (['status', 'statusguru', 'statuskaryawan', 'statussiswa'].includes(h)) record['status'] = val;
-            else if (['gurutype', 'jenisguru'].includes(h)) record['guruType'] = val;
-            else if (['subject', 'mapel', 'matapelajaran'].includes(h)) record['subject'] = val;
-            else if (['position', 'jabatan', 'jeniskaryawan', 'tugas'].includes(h)) record['position'] = val;
-            else if (['hasppg', 'ppg', 'sudahppg'].includes(h)) record['hasPpg'] = val;
-            else if (['sknumber', 'nomorsk', 'nosk', 'skpengangkatan'].includes(h)) record['skNumber'] = val;
-            else if (['tmbawal', 'tmtawal', 'tmtpengangkatan', 'tmt'].includes(h)) record['tmtAwal'] = val;
+            else if (['status', 'statusguru', 'statuskaryawan', 'statussiswa', 'statuskepegawaian'].includes(h)) record['status'] = val;
+            else if (['gurutype', 'jenisguru', 'tipeguru'].includes(h)) record['guruType'] = val;
+            else if (['subject', 'mapel', 'matapelajaran', 'detailkelas'].includes(h)) record['subject'] = val;
+            else if (['position', 'jabatan', 'jeniskaryawan', 'tugas', 'jeniskaryawanjabatan'].includes(h)) record['position'] = val;
+            else if (['hasppg', 'ppg', 'sudahppg', 'statusppg'].includes(h)) record['hasPpg'] = val;
+            else if (['sknumber', 'nomorsk', 'nosk', 'skpengangkatan', 'nomorskpengangkatan'].includes(h)) record['skNumber'] = val;
+            else if (['tmbawal', 'tmtawal', 'tmtpengangkatan', 'tmt', 'tmtawalpengangkatan'].includes(h)) record['tmtAwal'] = val;
             else if (['education', 'pendidikan', 'pendidikanterakhir'].includes(h)) record['education'] = val;
-            else if (['educationprodi', 'prodi', 'jurusan'].includes(h)) record['educationProdi'] = val;
-            else if (['address', 'alamat', 'domisili'].includes(h)) record['address'] = val;
-            else if (['rtrw', 'rt_rw', 'rt/rw'].includes(h)) record['rtRw'] = val;
+            else if (['educationprodi', 'prodi', 'jurusan', 'prodipendidikanterakhir', 'prodipendidikan'].includes(h)) record['educationProdi'] = val;
+            else if (['address', 'alamat', 'domisili', 'alamatdomisili'].includes(h)) record['address'] = val;
+            else if (['rtrw', 'rt_rw', 'rt/rw', 'rt', 'rw'].includes(h)) record['rtRw'] = val;
             else if (['postalcode', 'kodepos', 'pos'].includes(h)) record['postalCode'] = val;
-            else if (['kelurahan', 'desa'].includes(h)) record['kelurahan'] = val;
+            else if (['kelurahan', 'desa', 'kelurahandesa'].includes(h)) record['kelurahan'] = val;
             else if (['kecamatan'].includes(h)) record['kecamatan'] = val;
             else if (['kabupatenkota', 'kabupaten', 'kota'].includes(h)) record['kabupatenKota'] = val;
-            else if (['phone', 'nohp', 'telepon', 'hp'].includes(h)) record['phone'] = val;
-            else if (['persyarikatanactivity', 'keaktifanpersyarikatan', 'persyarikatan', 'ortom'].includes(h)) record['persyarikatanActivity'] = val;
+            else if (['phone', 'nohp', 'telepon', 'hp', 'nomorhp', 'nohpaktif'].includes(h)) record['phone'] = val;
+            else if (['persyarikatanactivity', 'keaktifanpersyarikatan', 'persyarikatan', 'ortom', 'keaktifandipersyarikatan'].includes(h)) record['persyarikatanActivity'] = val;
             else if (['jenjang', 'level'].includes(h)) record['level'] = val;
             else if (['accreditation', 'akreditasi'].includes(h)) record['accreditation'] = val;
             else if (['categorycapability', 'kategori', 'kategoriperguruan'].includes(h)) record['categoryCapability'] = val;
             else if (['subdistrict', 'kecamatansekolah'].includes(h)) record['subdistrict'] = val;
             else if (['email', 'emailsekolah'].includes(h)) record['email'] = val;
+            else if (['website', 'web'].includes(h)) record['website'] = val;
+            else if (['username', 'usernamelogin'].includes(h)) record['username'] = val;
+            else if (['password', 'passwordlogin'].includes(h)) record['password'] = val;
+            else if (['hasnib', 'nibstatus'].includes(h)) record['hasNib'] = val;
+            else if (['nib'].includes(h)) record['nib'] = val;
+            else if (['skpendiriannumber', 'nomorskpendirian'].includes(h)) record['skPendirianNumber'] = val;
+            else if (['skpendiriandate', 'tanggalskpendirian'].includes(h)) record['skPendirianDate'] = val;
+            else if (['skizinoperasional', 'nomorskizinoperasional'].includes(h)) record['skIzinOperasional'] = val;
+            else if (['skizinoperasionaldate', 'tanggalskizinoperasional'].includes(h)) record['skIzinOperasionalDate'] = val;
+            else if (['jumlahsiswaperkelas'].includes(h)) record['jumlahSiswaPerKelas'] = val;
+            else if (['jumlahkeseluruhansiswa'].includes(h)) record['jumlahKeseluruhanSiswa'] = val;
+            else if (['jumlahgtp'].includes(h)) record['jumlahGtp'] = val;
+            else if (['jumlahgttp'].includes(h)) record['jumlahGttp'] = val;
+            else if (['jumlahkeseluruhanguru'].includes(h)) record['jumlahKeseluruhanGuru'] = val;
+            else if (['jumlahktp'].includes(h)) record['jumlahKtp'] = val;
+            else if (['jumlahkttp'].includes(h)) record['jumlahKttp'] = val;
+            else if (['jumlahkeseluruhankaryawan'].includes(h)) record['jumlahKeseluruhanKaryawan'] = val;
+            else if (['jumlahgurusertifikasi'].includes(h)) record['jumlahGuruSertifikasi'] = val;
+            else if (['jumlahguruinpassing'].includes(h)) record['jumlahGuruInpassing'] = val;
+            else if (['jumlahdpkpns'].includes(h)) record['jumlahDpkPns'] = val;
+            else if (['sosmed', 'sosialmedia'].includes(h)) record['sosmed'] = val;
             else if (['operatorname', 'namaoperator', 'operator'].includes(h)) record['operatorName'] = val;
             else if (['operatorphone', 'hpoperator', 'nohpoperator'].includes(h)) record['operatorPhone'] = val;
+            else if (['curriculum', 'kurikulum'].includes(h)) record['curriculum'] = val;
+            else if (['vision', 'visi'].includes(h)) record['vision'] = val;
+            else if (['mission', 'misi'].includes(h)) record['mission'] = val;
+            else if (['description', 'deskripsi', 'profil'].includes(h)) record['description'] = val;
             else {
               record[header] = val;
             }

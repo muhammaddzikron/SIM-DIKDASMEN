@@ -5,9 +5,9 @@ export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfyc
 
 export const SHEET_COLUMNS: Record<TableName, string[]> = {
   Users: ['id', 'email', 'name', 'role', 'password', 'cabangId', 'sekolahId', 'createdAt'],
-  Cabang: ['id', 'name', 'code'],
+  Cabang: ['id', 'name', 'code', 'username', 'password', 'defaultEmail'],
   Sekolah: [
-    'id', 'name', 'npsn', 'cabangId', 'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota',
+    'id', 'name', 'npsn', 'username', 'password', 'cabangId', 'address', 'rtRw', 'postalCode', 'kelurahan', 'kecamatan', 'kabupatenKota',
     'status', 'level', 'phone', 'email', 'website', 'accreditation', 'accreditationExpiryDate', 'categoryCapability',
     'hasNib', 'nib', 'skPendirianNumber', 'skPendirianDate', 'skIzinOperasional', 'skIzinOperasionalDate',
     'jumlahSiswaPerKelas', 'jumlahKeseluruhanSiswa', 'jumlahGtp', 'jumlahGttp', 'jumlahKeseluruhanGuru',
