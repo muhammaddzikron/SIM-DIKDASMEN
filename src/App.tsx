@@ -561,19 +561,52 @@ export default function App() {
       createdAt: record.createdAt || new Date().toISOString(),
     };
 
-    // Auto-create Cabang user account if adding a new Cabang
+    // Auto-create Cabang / Sekolah user account
     let newCabangUser: User | null = null;
+    let newSekolahUser: User | null = null;
+
     if (mappedTable === 'Cabang') {
       const codeClean = (newRecord.code || 'cab').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const userEmail = record.defaultEmail || `cabang.${codeClean}@pdmklaten.com`;
-      const userPassword = record.defaultPassword || 'cabang123';
+      const userEmail = record.defaultEmail || record.email || `cabang.${codeClean}@pdmklaten.com`;
+      const userPassword = record.password || record.defaultPassword || 'cabang123';
+      const username = record.username || `cabang.${codeClean}`;
+
+      newRecord.username = username;
+      newRecord.password = userPassword;
+      newRecord.defaultEmail = userEmail;
+      newRecord.email = userEmail;
+
       newCabangUser = {
         id: 'usr-cab-' + Math.random().toString(36).substr(2, 9),
         email: userEmail,
+        username: username,
         name: newRecord.name,
         role: 'Cabang' as Role,
         password: userPassword,
         cabangId: newRecord.id,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    if (mappedTable === 'Sekolah') {
+      const npsnClean = (newRecord.npsn || 'sch').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const userEmail = record.email || `${npsnClean}@sekolah.id`;
+      const userPassword = record.password || 'sekolah123';
+      const username = record.username || npsnClean;
+
+      newRecord.username = username;
+      newRecord.password = userPassword;
+      newRecord.email = userEmail;
+
+      newSekolahUser = {
+        id: 'usr-sch-' + Math.random().toString(36).substr(2, 9),
+        email: userEmail,
+        username: username,
+        name: newRecord.name,
+        role: 'Sekolah' as Role,
+        password: userPassword,
+        cabangId: newRecord.cabangId || '',
+        sekolahId: newRecord.id,
         createdAt: new Date().toISOString(),
       };
     }
@@ -587,6 +620,13 @@ export default function App() {
           console.error('Gagal membuat akun user Cabang:', err);
         }
       }
+      if (newSekolahUser) {
+        try {
+          await insertRecord(accessToken || '', spreadsheetId, 'Users', newSekolahUser);
+        } catch (err) {
+          console.error('Gagal membuat akun user Sekolah:', err);
+        }
+      }
       await logActivity(`CREATE_${mappedTable.toUpperCase()}`, `Menambahkan record ${newRecord.id}`);
       await syncData(accessToken || '', spreadsheetId);
     } catch (err: any) {
@@ -594,10 +634,11 @@ export default function App() {
       // Fallback local update if network error
       const arrayKey = currentTab === 'users' ? 'users' : currentTab === 'kepalaSekolah' ? 'kepalaSekolah' : currentTab === 'skGuru' ? 'skGuru' : currentTab === 'skKepalaSekolah' ? 'skKepalaSekolah' : currentTab === 'logAktivitas' ? 'logAktivitas' : currentTab;
       setData((prev) => {
+        const addedUser = newCabangUser || newSekolahUser;
         const next = {
           ...prev,
           [arrayKey]: [...((prev as any)[arrayKey] || []), newRecord],
-          users: newCabangUser ? [...prev.users, newCabangUser] : prev.users,
+          users: addedUser ? [...prev.users, addedUser] : prev.users,
         };
         localStorage.setItem('sim_offline_db', JSON.stringify(next));
         return next;
@@ -631,19 +672,94 @@ export default function App() {
 
         // Sync corresponding user account in Users table
         const matchedUser = data.users.find(
-          (u) => u.cabangId === id || (existingCabang.defaultEmail && u.email === existingCabang.defaultEmail)
+          (u) => u.cabangId === id || (existingCabang.username && u.username === existingCabang.username) || (existingCabang.defaultEmail && u.email === existingCabang.defaultEmail)
         );
         if (matchedUser) {
           const updatedUser = {
             ...matchedUser,
             name: fieldsToSave.name || matchedUser.name,
+            username: fieldsToSave.username || matchedUser.username,
             email: fieldsToSave.defaultEmail || fieldsToSave.email || matchedUser.email,
             password: fieldsToSave.password || matchedUser.password,
+            role: 'Cabang' as Role,
+            cabangId: id,
           };
           try {
             await updateRecord(accessToken || '', spreadsheetId, 'Users', matchedUser.id, updatedUser);
           } catch (uErr) {
             console.warn('Sync user account cabang failed:', uErr);
+          }
+        } else {
+          // Create user account if didn't exist
+          const newU: User = {
+            id: 'usr-cab-' + Math.random().toString(36).substr(2, 9),
+            name: fieldsToSave.name || existingCabang.name,
+            username: fieldsToSave.username,
+            email: fieldsToSave.defaultEmail || fieldsToSave.email || `${fieldsToSave.username}@pdmklaten.com`,
+            password: fieldsToSave.password || 'cabang123',
+            role: 'Cabang' as Role,
+            cabangId: id,
+            createdAt: new Date().toISOString(),
+          };
+          try {
+            await insertRecord(accessToken || '', spreadsheetId, 'Users', newU);
+          } catch (uErr) {
+            console.warn('Create user account cabang failed:', uErr);
+          }
+        }
+      }
+    }
+
+    if (mappedTable === 'Sekolah') {
+      const existingSekolah = data.sekolah.find((s) => (s.id || s.key) === id);
+      if (existingSekolah) {
+        if (!fieldsToSave.username || String(fieldsToSave.username).trim() === '') {
+          fieldsToSave.username = existingSekolah.username || '';
+        }
+        if (!fieldsToSave.password || String(fieldsToSave.password).trim() === '') {
+          fieldsToSave.password = existingSekolah.password || '';
+        }
+        if (!fieldsToSave.email || String(fieldsToSave.email).trim() === '') {
+          fieldsToSave.email = existingSekolah.email || `${existingSekolah.npsn}@sekolah.id`;
+        }
+
+        // Sync corresponding user account in Users table
+        const matchedUser = data.users.find(
+          (u) => u.sekolahId === id || (existingSekolah.username && u.username === existingSekolah.username) || (existingSekolah.npsn && u.username === existingSekolah.npsn) || (existingSekolah.email && u.email === existingSekolah.email)
+        );
+        if (matchedUser) {
+          const updatedUser = {
+            ...matchedUser,
+            name: fieldsToSave.name || matchedUser.name,
+            username: fieldsToSave.username || matchedUser.username,
+            email: fieldsToSave.email || matchedUser.email,
+            password: fieldsToSave.password || matchedUser.password,
+            role: 'Sekolah' as Role,
+            cabangId: fieldsToSave.cabangId || matchedUser.cabangId,
+            sekolahId: id,
+          };
+          try {
+            await updateRecord(accessToken || '', spreadsheetId, 'Users', matchedUser.id, updatedUser);
+          } catch (uErr) {
+            console.warn('Sync user account sekolah failed:', uErr);
+          }
+        } else {
+          // Create user account if didn't exist
+          const newU: User = {
+            id: 'usr-sch-' + Math.random().toString(36).substr(2, 9),
+            name: fieldsToSave.name || existingSekolah.name,
+            username: fieldsToSave.username,
+            email: fieldsToSave.email || `${fieldsToSave.username}@sekolah.id`,
+            password: fieldsToSave.password || 'sekolah123',
+            role: 'Sekolah' as Role,
+            cabangId: fieldsToSave.cabangId || existingSekolah.cabangId || '',
+            sekolahId: id,
+            createdAt: new Date().toISOString(),
+          };
+          try {
+            await insertRecord(accessToken || '', spreadsheetId, 'Users', newU);
+          } catch (uErr) {
+            console.warn('Create user account sekolah failed:', uErr);
           }
         }
       }

@@ -74,22 +74,25 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       if (cached) {
         const db = JSON.parse(cached);
 
-        // 1. Check users table
+        // 1. Check users table first
         if (db && Array.isArray(db.users)) {
           const matched = db.users.find(
             (usr: any) =>
               usr &&
-              ((usr.email && usr.email.toLowerCase() === cleanU) ||
+              ((usr.username && usr.username.toLowerCase() === cleanU) ||
+               (usr.email && usr.email.toLowerCase() === cleanU) ||
                (usr.name && usr.name.toLowerCase() === cleanU) ||
                (usr.id && usr.id.toLowerCase() === cleanU) ||
                (cleanU === 'admin' && (usr.role === 'Super Admin' || usr.email === 'admin@klaten.go.id'))) &&
-              (usr.password ? usr.password === cleanP : cleanP === 'admin')
+              (usr.password && String(usr.password).trim() !== ''
+                ? String(usr.password).trim() === cleanP
+                : cleanP === 'admin' || cleanP === 'password' || cleanP === 'cabang123' || cleanP === 'sekolah123')
           );
           if (matched) {
             return {
               role: (matched.role || 'Super Admin') as Role,
-              name: matched.name || 'Super Admin Klaten',
-              email: matched.email || 'admin@klaten.go.id',
+              name: matched.name || matched.email || 'User SIM Dikdasmen',
+              email: matched.email || `${matched.username || 'user'}@pdmklaten.com`,
               cabangId: matched.cabangId || '',
               sekolahId: matched.sekolahId || '',
             };
@@ -103,15 +106,20 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               c &&
               ((c.username && c.username.toLowerCase() === cleanU) ||
                (c.defaultEmail && c.defaultEmail.toLowerCase() === cleanU) ||
+               (c.email && c.email.toLowerCase() === cleanU) ||
                (c.code && c.code.toLowerCase() === cleanU) ||
                (c.name && c.name.toLowerCase() === cleanU)) &&
-              (c.password ? c.password === cleanP : c.defaultPassword ? c.defaultPassword === cleanP : cleanP === 'password' || cleanP === 'cabang123')
+              ((c.password && String(c.password).trim() !== '')
+                ? String(c.password).trim() === cleanP
+                : (c.defaultPassword && String(c.defaultPassword).trim() !== '')
+                ? String(c.defaultPassword).trim() === cleanP
+                : cleanP === 'password' || cleanP === 'cabang123')
           );
           if (matchedCabang) {
             return {
               role: 'Cabang' as Role,
               name: matchedCabang.name,
-              email: matchedCabang.defaultEmail || matchedCabang.username || `${matchedCabang.code.toLowerCase()}@pdmklaten.com`,
+              email: matchedCabang.defaultEmail || matchedCabang.email || matchedCabang.username || `${matchedCabang.code ? matchedCabang.code.toLowerCase() : 'cabang'}@pdmklaten.com`,
               cabangId: matchedCabang.id,
               sekolahId: '',
             };
@@ -127,7 +135,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                (s.npsn && s.npsn.toLowerCase() === cleanU) ||
                (s.email && s.email.toLowerCase() === cleanU) ||
                (s.name && s.name.toLowerCase() === cleanU)) &&
-              (s.password ? s.password === cleanP : cleanP === 'sekolah123' || cleanP === '123456' || cleanP === 'password')
+              ((s.password && String(s.password).trim() !== '')
+                ? String(s.password).trim() === cleanP
+                : cleanP === 'sekolah123' || cleanP === '123456' || cleanP === 'password')
           );
           if (matchedSekolah) {
             return {

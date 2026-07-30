@@ -3,6 +3,7 @@ export type Role = 'Super Admin' | 'Admin' | 'Cabang' | 'Sekolah';
 export interface User {
   id: string;
   email: string;
+  username?: string;
   name: string;
   role: Role;
   password?: string;

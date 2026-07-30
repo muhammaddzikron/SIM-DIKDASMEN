@@ -277,8 +277,8 @@ export default function CrudView({
         return [
           { name: 'name', label: 'Nama Sekolah/Madrasah (sesuai Referensi Data Kemendikdasmen)', type: 'text', placeholder: 'Misal: SD Muhammadiyah 1 Klaten', required: true },
           { name: 'npsn', label: 'NPSN', type: 'text', placeholder: 'Nomor NPSN...', required: true },
-          { name: 'username', label: 'Username Akses Login Sekolah', type: 'text', placeholder: 'Username login sekolah (misal: sdmuh1klaten / NPSN)...', required: true },
-          { name: 'password', label: 'Password Akses Login Sekolah', type: 'password', placeholder: 'Password login sekolah...', required: true },
+          { name: 'username', label: 'Username Akses Login Sekolah', type: 'text', placeholder: 'Username login sekolah (kosongkan jika tidak diubah)...' },
+          { name: 'password', label: 'Password Akses Login Sekolah', type: 'password', placeholder: 'Password login sekolah (kosongkan jika tidak diubah)...' },
           {
             name: 'cabangId',
             label: 'Pimpinan Cabang',
