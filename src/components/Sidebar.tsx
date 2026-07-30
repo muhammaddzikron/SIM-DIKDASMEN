@@ -132,6 +132,12 @@ export default function Sidebar({
       allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
     },
     {
+      id: 'profile',
+      label: 'Profil Saya',
+      icon: UserCheck,
+      allowedRoles: ['Super Admin', 'Admin', 'Cabang', 'Sekolah'],
+    },
+    {
       id: 'settings',
       label: 'Pengaturan',
       icon: Settings,
@@ -161,17 +167,25 @@ export default function Sidebar({
 
       {/* User Information Profile summary */}
       <div className="px-5 py-3.5 border-b border-teal-700/30 bg-emerald-950/40 backdrop-blur-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-emerald-400/20 text-emerald-200 flex items-center justify-center font-black text-xs uppercase shrink-0 border border-emerald-400/30 shadow-xs">
+        <div 
+          onClick={() => onTabChange('profile')}
+          className="flex items-center gap-2.5 cursor-pointer group p-1.5 -m-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          title="Buka Profil Saya"
+        >
+          <div className="h-8 w-8 rounded-lg bg-emerald-400/20 text-emerald-200 flex items-center justify-center font-black text-xs uppercase shrink-0 border border-emerald-400/30 shadow-xs group-hover:scale-105 group-hover:bg-emerald-400/30 transition-all">
             {userName ? userName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs font-bold text-white truncate leading-none">{userName || 'User'}</h4>
+            <h4 className="text-xs font-bold text-white truncate leading-none group-hover:text-emerald-200 transition-colors">{userName || 'User'}</h4>
             <p className="text-[10px] text-emerald-200/70 truncate mt-1">{userEmail}</p>
           </div>
         </div>
         <div className="mt-2.5 flex items-center justify-between">
-          <span className="bg-emerald-400/20 text-emerald-200 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-400/30">
+          <span 
+            onClick={() => onTabChange('profile')}
+            className="bg-emerald-400/20 text-emerald-200 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-400/30 cursor-pointer hover:bg-emerald-400/30 transition-colors"
+            title="Kelola Profil"
+          >
             {userRole}
           </span>
           <button

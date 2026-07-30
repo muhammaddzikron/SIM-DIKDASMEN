@@ -20,6 +20,7 @@ import Dashboard from './components/Dashboard';
 import CrudView from './components/CrudView';
 import RecycleBinView from './components/RecycleBinView';
 import MutasiView from './components/MutasiView';
+import ProfileView from './components/ProfileView';
 import {
   ShieldAlert,
   RefreshCw,
@@ -897,6 +898,158 @@ export default function App() {
     }
   };
 
+  // Update Profile & Password
+  const handleUpdateProfile = async (updated: {
+    name: string;
+    username: string;
+    email: string;
+    password?: string;
+  }) => {
+    if (!userProfile) return;
+
+    const newFields: Partial<User> = {
+      name: updated.name,
+      email: updated.email,
+      username: updated.username,
+    };
+    if (updated.password) {
+      newFields.password = updated.password;
+    }
+
+    // 1. Update localStorage overrides
+    localStorage.setItem('sim_override_username', updated.name);
+    localStorage.setItem('sim_override_email', updated.email);
+
+    const activeSpreadsheetId = spreadsheetId || DEFAULT_SPREADSHEET_ID;
+
+    // 2. Find and update user in Users table if existing
+    const targetUser = data.users.find(
+      (u) =>
+        u.id === userProfile.id ||
+        (userProfile.email && u.email.toLowerCase() === userProfile.email.toLowerCase()) ||
+        (userProfile.username && u.username === userProfile.username) ||
+        (userProfile.cabangId && u.cabangId === userProfile.cabangId) ||
+        (userProfile.sekolahId && u.sekolahId === userProfile.sekolahId)
+    );
+
+    if (targetUser) {
+      const updatedUserObj = { ...targetUser, ...newFields };
+      try {
+        await updateRecord(accessToken || '', activeSpreadsheetId, 'Users', targetUser.id, updatedUserObj);
+      } catch (e) {
+        console.warn('Update user in sheets failed, fallback local:', e);
+      }
+    } else {
+      const newU: User = {
+        id: 'usr-' + Math.random().toString(36).substr(2, 9),
+        name: updated.name,
+        email: updated.email,
+        username: updated.username,
+        password: updated.password || 'password',
+        role: userProfile.role,
+        cabangId: userProfile.cabangId,
+        sekolahId: userProfile.sekolahId,
+        createdAt: new Date().toISOString(),
+      };
+      try {
+        await insertRecord(accessToken || '', activeSpreadsheetId, 'Users', newU);
+      } catch (e) {
+        console.warn('Insert user in sheets failed, fallback local:', e);
+      }
+    }
+
+    // 3. If Cabang role / entity exists
+    if (userProfile.cabangId || activeRole === 'Cabang') {
+      const targetCabang = data.cabang.find((c) => c.id === userProfile.cabangId) || data.cabang[0];
+      if (targetCabang) {
+        const updatedCabangObj = {
+          ...targetCabang,
+          name: updated.name || targetCabang.name,
+          username: updated.username || targetCabang.username,
+          defaultEmail: updated.email || targetCabang.defaultEmail,
+          email: updated.email || targetCabang.email,
+          ...(updated.password ? { password: updated.password } : {}),
+        };
+        try {
+          await updateRecord(accessToken || '', activeSpreadsheetId, 'Cabang', targetCabang.id, updatedCabangObj);
+        } catch (e) {
+          console.warn('Update cabang failed:', e);
+        }
+      }
+    }
+
+    // 4. If Sekolah role / entity exists
+    if (userProfile.sekolahId || activeRole === 'Sekolah') {
+      const targetSekolah = data.sekolah.find((s) => s.id === userProfile.sekolahId) || data.sekolah[0];
+      if (targetSekolah) {
+        const updatedSekolahObj = {
+          ...targetSekolah,
+          name: updated.name || targetSekolah.name,
+          username: updated.username || targetSekolah.username,
+          email: updated.email || targetSekolah.email,
+          ...(updated.password ? { password: updated.password } : {}),
+        };
+        try {
+          await updateRecord(accessToken || '', activeSpreadsheetId, 'Sekolah', targetSekolah.id, updatedSekolahObj);
+        } catch (e) {
+          console.warn('Update sekolah failed:', e);
+        }
+      }
+    }
+
+    // 5. Update local state userProfile
+    const updatedProfileObj: User = {
+      ...userProfile,
+      ...newFields,
+    };
+    setUserProfile(updatedProfileObj);
+
+    // Sync data or local DB storage
+    const cached = localStorage.getItem('sim_offline_db');
+    if (cached) {
+      const localDb = JSON.parse(cached);
+      if (Array.isArray(localDb.users)) {
+        const uIdx = localDb.users.findIndex((u: any) => u.id === userProfile.id || u.email === userProfile.email);
+        if (uIdx >= 0) {
+          localDb.users[uIdx] = { ...localDb.users[uIdx], ...newFields };
+        } else {
+          localDb.users.push(updatedProfileObj);
+        }
+      }
+      if (userProfile.cabangId && Array.isArray(localDb.cabang)) {
+        const cIdx = localDb.cabang.findIndex((c: any) => c.id === userProfile.cabangId);
+        if (cIdx >= 0) {
+          localDb.cabang[cIdx] = {
+            ...localDb.cabang[cIdx],
+            name: updated.name,
+            username: updated.username,
+            defaultEmail: updated.email,
+            email: updated.email,
+            ...(updated.password ? { password: updated.password } : {}),
+          };
+        }
+      }
+      if (userProfile.sekolahId && Array.isArray(localDb.sekolah)) {
+        const sIdx = localDb.sekolah.findIndex((s: any) => s.id === userProfile.sekolahId);
+        if (sIdx >= 0) {
+          localDb.sekolah[sIdx] = {
+            ...localDb.sekolah[sIdx],
+            name: updated.name,
+            username: updated.username,
+            email: updated.email,
+            ...(updated.password ? { password: updated.password } : {}),
+          };
+        }
+      }
+      localStorage.setItem('sim_offline_db', JSON.stringify(localDb));
+      setData(localDb);
+    }
+
+    if (accessToken) {
+      await syncData(accessToken, activeSpreadsheetId);
+    }
+  };
+
   const handleTestAppsScriptConnection = async () => {
     if (!appsScriptUrl) {
       alert('Mohon masukkan URL Google Apps Script Web App terlebih dahulu.');
@@ -1157,12 +1310,16 @@ export default function App() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div 
+              onClick={() => setCurrentTab('profile')}
+              className="flex items-center gap-2 cursor-pointer group hover:bg-slate-100 p-1 rounded-xl transition-all"
+              title="Buka Profil Saya & Ubah Kata Sandi"
+            >
               <div className="text-right hidden min-[480px]:block">
-                <p className="text-xs font-bold text-slate-800 leading-none truncate max-w-[150px]">{userProfile?.name || user?.displayName || 'User'}</p>
+                <p className="text-xs font-bold text-slate-800 leading-none truncate max-w-[150px] group-hover:text-teal-700 transition-colors">{userProfile?.name || user?.displayName || 'User'}</p>
                 <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1">{activeRole}</p>
               </div>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 shadow-2xs flex items-center justify-center font-black text-slate-700 text-xs uppercase shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xs flex items-center justify-center font-black text-xs uppercase shrink-0 ring-2 ring-emerald-300/60 group-hover:scale-105 transition-all">
                 {userProfile?.name ? userProfile.name.charAt(0) : user?.displayName ? user.displayName.charAt(0) : 'U'}
               </div>
             </div>
@@ -1358,6 +1515,13 @@ export default function App() {
               localStorage.setItem('sim_offline_db', JSON.stringify(reloadedData));
             }}
             isDarkMode={false}
+          />
+        ) : currentTab === 'profile' ? (
+          <ProfileView
+            userProfile={userProfile}
+            userRole={activeRole}
+            data={data}
+            onUpdateProfile={handleUpdateProfile}
           />
         ) : (
           <CrudView
