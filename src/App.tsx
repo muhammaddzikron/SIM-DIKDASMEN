@@ -478,7 +478,8 @@ export default function App() {
       } as any);
       setAccessToken(null);
       setNeedsAuth(false);
-      syncOfflineData();
+      // Fetch live data directly from Google Sheets via Apps Script
+      syncData('', spreadsheetId);
       return;
     }
 
@@ -491,16 +492,18 @@ export default function App() {
           localStorage.setItem('sim_user_email', currentUser.email);
           localStorage.setItem('sim_user_name', currentUser.displayName || 'User');
         }
-        syncData(token, spreadsheetId);
+        syncData(token || '', spreadsheetId);
       },
       () => {
         setNeedsAuth(true);
         setUser(null);
         setAccessToken(null);
+        // Load data from Google Sheets even if not authenticated via Firebase OAuth
+        syncData('', spreadsheetId);
       }
     );
     return () => unsubscribe();
-  }, [syncData, syncOfflineData, spreadsheetId]);
+  }, [syncData, spreadsheetId]);
 
   const handleLoginSuccess = (currentUser: FirebaseUser | any, token: string | null) => {
     setUser(currentUser);
@@ -510,13 +513,8 @@ export default function App() {
       localStorage.setItem('sim_user_email', currentUser.email);
       localStorage.setItem('sim_user_name', currentUser.displayName || 'User');
     }
-    if (token) {
-      localStorage.removeItem('sim_is_offline');
-      syncData(token, spreadsheetId);
-    } else {
-      localStorage.setItem('sim_is_offline', 'true');
-      syncOfflineData();
-    }
+    // Always sync live data from Google Spreadsheet
+    syncData(token || '', spreadsheetId);
   };
 
   const handleLogout = async () => {
@@ -545,19 +543,8 @@ export default function App() {
       details,
       timestamp: new Date().toLocaleString('id-ID'),
     };
-    if (!accessToken) {
-      setData((prev) => {
-        const next = {
-          ...prev,
-          logAktivitas: [logRecord, ...prev.logAktivitas],
-        };
-        localStorage.setItem('sim_offline_db', JSON.stringify(next));
-        return next;
-      });
-      return;
-    }
     try {
-      await insertRecord(accessToken, spreadsheetId, 'LogAktivitas', logRecord);
+      await insertRecord(accessToken || '', spreadsheetId, 'LogAktivitas', logRecord);
     } catch (err) {
       console.error('Failed to write audit log:', err);
     }
@@ -591,8 +578,20 @@ export default function App() {
       };
     }
 
-    if (!accessToken) {
-      // Offline/simulation fallback
+    try {
+      await insertRecord(accessToken || '', spreadsheetId, mappedTable, newRecord);
+      if (newCabangUser) {
+        try {
+          await insertRecord(accessToken || '', spreadsheetId, 'Users', newCabangUser);
+        } catch (err) {
+          console.error('Gagal membuat akun user Cabang:', err);
+        }
+      }
+      await logActivity(`CREATE_${mappedTable.toUpperCase()}`, `Menambahkan record ${newRecord.id}`);
+      await syncData(accessToken || '', spreadsheetId);
+    } catch (err: any) {
+      console.error('Add record failed:', err);
+      // Fallback local update if network error
       const arrayKey = currentTab === 'users' ? 'users' : currentTab === 'kepalaSekolah' ? 'kepalaSekolah' : currentTab === 'skGuru' ? 'skGuru' : currentTab === 'skKepalaSekolah' ? 'skKepalaSekolah' : currentTab === 'logAktivitas' ? 'logAktivitas' : currentTab;
       setData((prev) => {
         const next = {
@@ -603,20 +602,8 @@ export default function App() {
         localStorage.setItem('sim_offline_db', JSON.stringify(next));
         return next;
       });
-      await logActivity(`CREATE_${mappedTable.toUpperCase()}`, `[Offline] Menambahkan record ${newRecord.id}`);
-      return;
+      alert('Gagal menyimpan ke Google Spreadsheet. Data tersimpan di memori lokal: ' + (err.message || ''));
     }
-
-    await insertRecord(accessToken, spreadsheetId, mappedTable, newRecord);
-    if (newCabangUser) {
-      try {
-        await insertRecord(accessToken, spreadsheetId, 'Users', newCabangUser);
-      } catch (err) {
-        console.error('Gagal membuat akun user Cabang:', err);
-      }
-    }
-    await logActivity(`CREATE_${mappedTable.toUpperCase()}`, `Menambahkan record ${newRecord.id}`);
-    await syncData(accessToken, spreadsheetId);
   };
 
   // CRUD Handler - Update
@@ -624,8 +611,12 @@ export default function App() {
     const mappedTable = TAB_TO_TABLE_MAP[currentTab];
     if (!mappedTable) return;
 
-    if (!accessToken) {
-      // Offline/simulation fallback
+    try {
+      await updateRecord(accessToken || '', spreadsheetId, mappedTable, id, updatedFields);
+      await logActivity(`UPDATE_${mappedTable.toUpperCase()}`, `Mengubah record ${id}`);
+      await syncData(accessToken || '', spreadsheetId);
+    } catch (err: any) {
+      console.error('Edit record failed:', err);
       const arrayKey = currentTab === 'users' ? 'users' : currentTab === 'kepalaSekolah' ? 'kepalaSekolah' : currentTab === 'skGuru' ? 'skGuru' : currentTab === 'skKepalaSekolah' ? 'skKepalaSekolah' : currentTab === 'logAktivitas' ? 'logAktivitas' : currentTab;
       setData((prev) => {
         const next = {
@@ -637,13 +628,8 @@ export default function App() {
         localStorage.setItem('sim_offline_db', JSON.stringify(next));
         return next;
       });
-      await logActivity(`UPDATE_${mappedTable.toUpperCase()}`, `[Offline] Mengubah record ${id}`);
-      return;
+      alert('Gagal memperbarui ke Google Spreadsheet: ' + (err.message || ''));
     }
-
-    await updateRecord(accessToken, spreadsheetId, mappedTable, id, updatedFields);
-    await logActivity(`UPDATE_${mappedTable.toUpperCase()}`, `Mengubah record ${id}`);
-    await syncData(accessToken, spreadsheetId);
   };
 
   // CRUD Handler - Delete (With local Recycle Bin save)
@@ -657,16 +643,9 @@ export default function App() {
     const list = (data as any)[arrayKey] || [];
     itemData = list.find((item: any) => (item.id || item.key) === id);
 
-    if (!accessToken) {
-      // Offline/simulation fallback
-      setData((prev) => {
-        const next = {
-          ...prev,
-          [arrayKey]: ((prev as any)[arrayKey] || []).filter((item: any) => (item.id || item.key) !== id),
-        };
-        localStorage.setItem('sim_offline_db', JSON.stringify(next));
-        return next;
-      });
+    try {
+      await deleteRecord(accessToken || '', spreadsheetId, mappedTable, id);
+
       if (itemData) {
         const newItem = {
           recycleId: 'rec-bin-' + Math.random().toString(36).substr(2, 9),
@@ -678,28 +657,13 @@ export default function App() {
         setRecycleBin(updatedBin);
         localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
       }
-      await logActivity(`DELETE_${mappedTable.toUpperCase()}`, `[Offline] Menghapus record ${id}`);
-      return;
+
+      await logActivity(`DELETE_${mappedTable.toUpperCase()}`, `Menghapus record ${id}`);
+      await syncData(accessToken || '', spreadsheetId);
+    } catch (err: any) {
+      console.error('Delete record failed:', err);
+      alert('Gagal menghapus dari Google Spreadsheet: ' + (err.message || ''));
     }
-
-    // Perform actual deletion from Sheets database
-    await deleteRecord(accessToken, spreadsheetId, mappedTable, id);
-
-    // Save to local Recycle Bin
-    if (itemData) {
-      const newItem = {
-        recycleId: 'rec-bin-' + Math.random().toString(36).substr(2, 9),
-        originalTable: mappedTable,
-        data: itemData,
-        deletedAt: new Date().toLocaleString('id-ID'),
-      };
-      const updatedBin = [newItem, ...recycleBin];
-      setRecycleBin(updatedBin);
-      localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
-    }
-
-    await logActivity(`DELETE_${mappedTable.toUpperCase()}`, `Menghapus record ${id}`);
-    await syncData(accessToken, spreadsheetId);
   };
 
   // CRUD Handler - Bulk Delete (With local Recycle Bin save)
@@ -711,77 +675,40 @@ export default function App() {
     const list = (data as any)[arrayKey] || [];
     const itemsToDelete = list.filter((item: any) => ids.includes(item.id || item.key));
 
-    if (!accessToken) {
-      // Offline/simulation fallback
-      setData((prev) => {
-        const next = {
-          ...prev,
-          [arrayKey]: ((prev as any)[arrayKey] || []).filter((item: any) => !ids.includes(item.id || item.key)),
-        };
-        localStorage.setItem('sim_offline_db', JSON.stringify(next));
-        return next;
-      });
+    try {
+      for (const id of ids) {
+        await deleteRecord(accessToken || '', spreadsheetId, mappedTable, id);
+      }
+
       const newRecycleItems = itemsToDelete.map((item: any) => ({
         recycleId: 'rec-bin-' + Math.random().toString(36).substr(2, 9),
         originalTable: mappedTable,
         data: item,
         deletedAt: new Date().toLocaleString('id-ID'),
       }));
+
       const updatedBin = [...newRecycleItems, ...recycleBin];
       setRecycleBin(updatedBin);
       localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
-      await logActivity(`BULK_DELETE_${mappedTable.toUpperCase()}`, `[Offline] Menghapus ${ids.length} record secara massal`);
-      return;
+
+      await logActivity(`BULK_DELETE_${mappedTable.toUpperCase()}`, `Menghapus ${ids.length} record secara massal`);
+      await syncData(accessToken || '', spreadsheetId);
+    } catch (err: any) {
+      console.error('Bulk delete failed:', err);
+      alert('Gagal menghapus massal dari Google Spreadsheet: ' + (err.message || ''));
     }
-
-    // Delete one by one in Google Sheets
-    for (const id of ids) {
-      await deleteRecord(accessToken, spreadsheetId, mappedTable, id);
-    }
-
-    const newRecycleItems = itemsToDelete.map((item: any) => ({
-      recycleId: 'rec-bin-' + Math.random().toString(36).substr(2, 9),
-      originalTable: mappedTable,
-      data: item,
-      deletedAt: new Date().toLocaleString('id-ID'),
-    }));
-
-    const updatedBin = [...newRecycleItems, ...recycleBin];
-    setRecycleBin(updatedBin);
-    localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
-
-    await logActivity(`BULK_DELETE_${mappedTable.toUpperCase()}`, `Menghapus ${ids.length} record secara massal`);
-    await syncData(accessToken, spreadsheetId);
   };
 
   // Recycle Bin actions
   const handleRestoreRecycleItem = async (item: any) => {
-    if (!accessToken) {
-      // Offline fallback
-      const arrayKey = item.originalTable === 'Users' ? 'users' : item.originalTable === 'KepalaSekolah' ? 'kepalaSekolah' : item.originalTable === 'SKGuru' ? 'skGuru' : item.originalTable === 'SKKepalaSekolah' ? 'skKepalaSekolah' : item.originalTable === 'LogAktivitas' ? 'logAktivitas' : item.originalTable.toLowerCase();
-      setData((prev) => {
-        const next = {
-          ...prev,
-          [arrayKey]: [...((prev as any)[arrayKey] || []), item.data],
-        };
-        localStorage.setItem('sim_offline_db', JSON.stringify(next));
-        return next;
-      });
-      const updatedBin = recycleBin.filter((x) => x.recycleId !== item.recycleId);
-      setRecycleBin(updatedBin);
-      localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
-      await logActivity(`RESTORE_${item.originalTable.toUpperCase()}`, `[Offline] Memulihkan record ${item.data.id || item.data.key}`);
-      alert('Data berhasil dipulihkan secara lokal!');
-      return;
-    }
     try {
-      await insertRecord(accessToken, spreadsheetId, item.originalTable, item.data);
+      await insertRecord(accessToken || '', spreadsheetId, item.originalTable, item.data);
       const updatedBin = recycleBin.filter((x) => x.recycleId !== item.recycleId);
       setRecycleBin(updatedBin);
       localStorage.setItem('sim_recycle_bin', JSON.stringify(updatedBin));
       await logActivity(`RESTORE_${item.originalTable.toUpperCase()}`, `Memulihkan record ${item.data.id || item.data.key}`);
       alert('Data berhasil dipulihkan ke Google Sheets!');
-      await syncData(accessToken, spreadsheetId);
+      await syncData(accessToken || '', spreadsheetId);
     } catch (err: any) {
       alert(`Gagal memulihkan data: ${err.message || err}`);
     }
